@@ -1,0 +1,2800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Workout">
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%230a0a0a' width='180' height='180'/><circle cx='90' cy='90' r='50' fill='%2300d9ff'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%230a0a0a' width='32' height='32'/><circle cx='16' cy='16' r='10' fill='%2300d9ff'/></svg>">
+    <title>Workout</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --border: rgba(255, 255, 255, 0.05);
+            --border-light: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-tertiary: #707070;
+            --accent: #00d9ff;
+            --accent-dark: #0099bb;
+            --success: #00ff88;
+            --danger: #ff3366;
+            --warning: #ffaa00;
+            --safe-area-inset-top: max(12px, env(safe-area-inset-top));
+            --safe-area-inset-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #root {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrolling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Global transitions */
+        * {
+            transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        input {
+            font-family: inherit;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* App container */
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-top: var(--safe-area-inset-top);
+            padding-bottom: var(--safe-area-inset-bottom);
+        }
+
+        .app-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(60px + var(--safe-area-inset-bottom));
+            padding-bottom: var(--safe-area-inset-bottom);
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border: none;
+            background: none;
+            color: var(--text-tertiary);
+            font-size: 11px;
+            font-weight: 500;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+        }
+
+        .nav-item-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            animation: fadeIn 200ms ease;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Cards and containers */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-hover {
+            transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+        }
+
+        .card-hover:active {
+            background: var(--bg-tertiary);
+            border-color: var(--border-light);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:active {
+            background: var(--accent-dark);
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:active {
+            background: var(--bg-primary);
+            border-color: var(--text-secondary);
+        }
+
+        .btn-danger {
+            background: rgba(255, 51, 102, 0.1);
+            color: #ff3366;
+            border: 1px solid rgba(255, 51, 102, 0.2);
+        }
+
+        .btn-danger:active {
+            background: rgba(255, 51, 102, 0.2);
+            border-color: rgba(255, 51, 102, 0.4);
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* Typography */
+        .text-h1 {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .text-h2 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .text-h3 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .text-h4 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .text-body {
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .text-caption {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Layout utilities */
+        .flex {
+            display: flex;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .gap-xs { gap: 4px; }
+        .gap-sm { gap: 8px; }
+        .gap-md { gap: 12px; }
+        .gap-lg { gap: 16px; }
+        .gap-xl { gap: 24px; }
+
+        .px-md { padding-left: 16px; padding-right: 16px; }
+        .py-md { padding-top: 16px; padding-bottom: 16px; }
+        .p-md { padding: 16px; }
+
+        .mt-md { margin-top: 16px; }
+        .mb-md { margin-bottom: 16px; }
+        .mt-lg { margin-top: 24px; }
+
+        /* Screen specific styles */
+        .home-screen {
+            padding: 0 16px;
+        }
+
+        .greeting {
+            font-size: 28px;
+            font-weight: 300;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .greeting-time {
+            color: var(--text-primary);
+        }
+
+        .plans-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 100px;
+        }
+
+        .plan-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+        }
+
+        .plan-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .plan-card-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .plan-card-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .plan-card-status {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--accent);
+            margin-top: 8px;
+        }
+
+        /* Input styles */
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        /* Set recorder */
+        .set-recorder {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .set-recorder-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .set-number {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .set-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: transparent;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .set-status.completed {
+            background: var(--success);
+            border-color: var(--success);
+            color: var(--bg-primary);
+        }
+
+        .set-inputs {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .set-input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .set-input-full {
+            grid-column: 1 / -1;
+        }
+
+        .set-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .set-input-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .set-input-value {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .set-input-value input {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            outline: none;
+        }
+
+        .set-input-value input:focus {
+            border-color: var(--accent);
+            background: var(--bg-primary);
+        }
+
+        .set-input-unit {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            min-width: 30px;
+        }
+
+        .set-complete-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .set-complete-btn:active {
+            transform: scale(0.98);
+        }
+
+        .set-complete-btn.completed-pulse {
+            animation: completePulse 320ms ease;
+        }
+
+        @keyframes completePulse {
+            0% { transform: scale(1); }
+            40% { transform: scale(0.96); }
+            100% { transform: scale(1); }
+        }
+
+        /* Stepper buttons for fast numeric entry */
+        .stepper-btn {
+            width: 34px;
+            height: 40px;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .stepper-btn:active {
+            background: var(--bg-primary);
+            transform: scale(0.95);
+        }
+
+        /* Set-completion dots shown per exercise */
+        .set-dots {
+            display: flex;
+            gap: 5px;
+            margin-top: 6px;
+        }
+
+        .set-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--border-light);
+            transition: background-color 200ms ease, transform 200ms ease;
+        }
+
+        .set-dot.filled {
+            background: var(--success);
+        }
+
+        /* Session progress bar */
+        .session-progress-track {
+            width: 100%;
+            height: 4px;
+            background: var(--border-light);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .session-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 300ms ease;
+        }
+
+        /* Completion screen */
+        .complete-checkmark {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: rgba(0, 255, 136, 0.12);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: var(--success);
+            margin: 0 auto;
+            animation: completeAppear 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes completeAppear {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            font-feature-settings: "tnum";
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: flex-end;
+            z-index: 200;
+            animation: fadeIn 200ms ease;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            width: 100%;
+            border-radius: 24px 24px 0 0;
+            padding: 24px 16px;
+            padding-bottom: calc(24px + var(--safe-area-inset-bottom));
+            border: 1px solid var(--border);
+            border-bottom: none;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 200ms ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .app-nav {
+                flex-direction: row;
+                gap: 0;
+            }
+
+            .modal-content {
+                width: 600px;
+                margin: auto;
+                border-radius: 24px;
+                border-bottom: 1px solid var(--border);
+                max-height: 80vh;
+            }
+
+            .set-recorder {
+                margin-bottom: 16px;
+            }
+
+            .set-input-row {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        /* Empty state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            color: var(--text-secondary);
+            max-width: 280px;
+        }
+
+        /* Loading */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 600ms linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Padding bottom for nav */
+        .with-nav-bottom {
+            padding-bottom: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+        // ==================== Types & Constants ====================
+
+        const EXERCISE_TYPES = {
+            WEIGHTED: 'weighted',
+            BODYWEIGHT: 'bodyweight',
+            TIME_BASED: 'time_based'
+        };
+
+        function generateId() {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return Date.now().toString(36) + Math.random().toString(36).slice(2);
+        }
+
+        // Returns the adjacent exercise sharing the same supersetId, if any.
+        // Supersets are only ever formed between immediate neighbors, so this
+        // is enough to find a pairing without needing a full grouping pass.
+        function getSupersetPartner(exercises, exercise) {
+            if (!exercise.supersetId) return null;
+            const idx = exercises.findIndex(e => e.id === exercise.id);
+            const prev = exercises[idx - 1];
+            const next = exercises[idx + 1];
+            if (prev && prev.supersetId === exercise.supersetId) return prev;
+            if (next && next.supersetId === exercise.supersetId) return next;
+            return null;
+        }
+
+        // Silently downloads a timestamped JSON snapshot of all app data.
+        // Used both by the manual "Export backup" button and by automatic
+        // backups triggered after meaningful changes (plan/workout/exercise
+        // edits, finishing a workout). No file-system permission prompt is
+        // needed since this just uses a normal browser download.
+        function downloadBackupFile() {
+            try {
+                const json = store.exportData();
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                a.href = url;
+                a.download = `workout-backup-${stamp}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error('Auto-backup failed:', e);
+            }
+        }
+
+        // ==================== State Management (Zustand-like) ====================
+
+        class WorkoutStore {
+            constructor() {
+                this.data = {
+                    plans: [],
+                    sessions: [],
+                    currentSession: null
+                };
+                this.listeners = [];
+                this.loadFromStorage();
+                this.migrateDuplicateIds();
+            }
+
+            // One-time repair for data created before IDs were guaranteed unique.
+            // Older versions generated IDs from Date.now() inside tight loops, so
+            // several exercises/workouts created in the same plan could end up
+            // sharing an identical ID. That made "delete one" remove every item
+            // with that ID. This walks existing data and reassigns fresh IDs to
+            // any duplicates found (keeping the first occurrence untouched).
+            migrateDuplicateIds() {
+                let changed = false;
+                const seenPlanIds = new Set();
+
+                this.data.plans.forEach(plan => {
+                    if (seenPlanIds.has(plan.id)) {
+                        plan.id = generateId();
+                        changed = true;
+                    }
+                    seenPlanIds.add(plan.id);
+
+                    const seenWorkoutIds = new Set();
+                    (plan.workouts || []).forEach(workout => {
+                        if (seenWorkoutIds.has(workout.id)) {
+                            workout.id = generateId();
+                            changed = true;
+                        }
+                        seenWorkoutIds.add(workout.id);
+
+                        const seenExerciseIds = new Set();
+                        (workout.exercises || []).forEach(exercise => {
+                            if (seenExerciseIds.has(exercise.id)) {
+                                exercise.id = generateId();
+                                changed = true;
+                            }
+                            seenExerciseIds.add(exercise.id);
+                        });
+                    });
+                });
+
+                // Also repair an in-progress session, if any — it's still mutable,
+                // unlike completed history which must stay an untouched snapshot.
+                if (this.data.currentSession) {
+                    const seenIds = new Set();
+                    this.data.currentSession.exercises.forEach(exercise => {
+                        if (seenIds.has(exercise.id)) {
+                            exercise.id = generateId();
+                            changed = true;
+                        }
+                        seenIds.add(exercise.id);
+                    });
+                }
+
+                if (changed) {
+                    console.warn('Workout data had duplicate IDs from an earlier version — repaired automatically.');
+                    this.saveToStorage();
+                }
+            }
+
+            subscribe(listener) {
+                this.listeners.push(listener);
+                return () => {
+                    this.listeners = this.listeners.filter(l => l !== listener);
+                };
+            }
+
+            notify() {
+                this.listeners.forEach(l => l());
+                this.saveToStorage();
+            }
+
+            // Plans
+            getPlans() {
+                return this.data.plans;
+            }
+
+            getPlan(id) {
+                return this.data.plans.find(p => p.id === id);
+            }
+
+            createPlan(name) {
+                const plan = {
+                    id: generateId(),
+                    name,
+                    workouts: [],
+                    createdAt: new Date().toISOString()
+                };
+                this.data.plans.push(plan);
+                this.notify();
+                return plan;
+            }
+
+            updatePlan(id, updates) {
+                const plan = this.getPlan(id);
+                if (plan) {
+                    Object.assign(plan, updates);
+                    this.notify();
+                }
+            }
+
+            deletePlan(id) {
+                const index = this.data.plans.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    this.data.plans.splice(index, 1);
+                    this.notify();
+                }
+            }
+
+            // Workouts
+            addWorkout(planId, name) {
+                const plan = this.getPlan(planId);
+                if (plan) {
+                    const workout = {
+                        id: generateId(),
+                        name,
+                        exercises: []
+                    };
+                    plan.workouts.push(workout);
+                    this.notify();
+                    return workout;
+                }
+            }
+
+            reorderWorkouts(planId, workouts) {
+                const plan = this.getPlan(planId);
+                if (plan) {
+                    plan.workouts = workouts;
+                    this.notify();
+                }
+            }
+
+            duplicateWorkout(planId, workoutId) {
+                const plan = this.getPlan(planId);
+                const workout = this.getWorkout(planId, workoutId);
+                if (!plan || !workout) return null;
+
+                const index = plan.workouts.findIndex(w => w.id === workoutId);
+                const copy = {
+                    id: generateId(),
+                    name: `${workout.name} (Copy)`,
+                    exercises: workout.exercises.map(ex => ({
+                        ...ex,
+                        id: generateId()
+                    }))
+                };
+                plan.workouts.splice(index + 1, 0, copy);
+                this.notify();
+                return copy;
+            }
+
+            getWorkout(planId, workoutId) {
+                const plan = this.getPlan(planId);
+                return plan?.workouts.find(w => w.id === workoutId);
+            }
+
+            updateWorkout(planId, workoutId, updates) {
+                const workout = this.getWorkout(planId, workoutId);
+                if (workout) {
+                    Object.assign(workout, updates);
+                    this.notify();
+                }
+            }
+
+            deleteWorkout(planId, workoutId) {
+                const plan = this.getPlan(planId);
+                if (plan) {
+                    const index = plan.workouts.findIndex(w => w.id === workoutId);
+                    if (index !== -1) {
+                        plan.workouts.splice(index, 1);
+                        this.notify();
+                    }
+                }
+            }
+
+            // Exercises
+            addExercise(planId, workoutId, exercise) {
+                const workout = this.getWorkout(planId, workoutId);
+                if (workout) {
+                    exercise.id = generateId();
+                    workout.exercises.push(exercise);
+                    this.notify();
+                    return exercise;
+                }
+            }
+
+            updateExercise(planId, workoutId, exerciseId, updates) {
+                const workout = this.getWorkout(planId, workoutId);
+                const exercise = workout?.exercises.find(e => e.id === exerciseId);
+                if (exercise) {
+                    Object.assign(exercise, updates);
+                    this.notify();
+                }
+            }
+
+            deleteExercise(planId, workoutId, exerciseId) {
+                const workout = this.getWorkout(planId, workoutId);
+                if (workout) {
+                    const index = workout.exercises.findIndex(e => e.id === exerciseId);
+                    if (index !== -1) {
+                        workout.exercises.splice(index, 1);
+                        this.repairSupersetAdjacency(workout);
+                        this.notify();
+                    }
+                }
+            }
+
+            reorderExercises(planId, workoutId, exercises) {
+                const workout = this.getWorkout(planId, workoutId);
+                if (workout) {
+                    workout.exercises = exercises;
+                    this.repairSupersetAdjacency(workout);
+                    this.notify();
+                }
+            }
+
+            // Supersets are only valid between immediate neighbors. If a
+            // reorder or a deletion leaves a linked exercise without its
+            // partner directly beside it, the link is dropped automatically
+            // rather than leaving a dangling/confusing half-superset.
+            repairSupersetAdjacency(workout) {
+                workout.exercises.forEach((ex, i) => {
+                    if (!ex.supersetId) return;
+                    const prev = workout.exercises[i - 1];
+                    const next = workout.exercises[i + 1];
+                    const hasPartner = (prev && prev.supersetId === ex.supersetId) ||
+                        (next && next.supersetId === ex.supersetId);
+                    if (!hasPartner) ex.supersetId = null;
+                });
+            }
+
+            linkSupersetWithNext(planId, workoutId, exerciseId) {
+                const workout = this.getWorkout(planId, workoutId);
+                if (!workout) return;
+                const idx = workout.exercises.findIndex(e => e.id === exerciseId);
+                if (idx === -1 || idx === workout.exercises.length - 1) return;
+                const a = workout.exercises[idx];
+                const b = workout.exercises[idx + 1];
+                const groupId = generateId();
+                a.supersetId = groupId;
+                b.supersetId = groupId;
+                this.notify();
+            }
+
+            unlinkSuperset(planId, workoutId, exerciseId) {
+                const workout = this.getWorkout(planId, workoutId);
+                if (!workout) return;
+                const exercise = workout.exercises.find(e => e.id === exerciseId);
+                if (!exercise || !exercise.supersetId) return;
+                const groupId = exercise.supersetId;
+                workout.exercises.forEach(e => {
+                    if (e.supersetId === groupId) e.supersetId = null;
+                });
+                this.notify();
+            }
+
+            // Sessions (Workouts in progress)
+            startWorkout(planId, workoutId) {
+                const plan = this.getPlan(planId);
+                const workout = this.getWorkout(planId, workoutId);
+
+                if (!plan || !workout) return null;
+
+                // Create session with snapshot of current plan
+                const session = {
+                    id: generateId(),
+                    planId,
+                    planName: plan.name,
+                    workoutId,
+                    workoutName: workout.name,
+                    startedAt: new Date().toISOString(),
+                    exercises: workout.exercises.map(ex => {
+                        const setCount = Number.isInteger(ex.sets) && ex.sets > 0 ? ex.sets : 1;
+                        return {
+                            ...ex,
+                            completedSets: Array(setCount).fill(null).map(() => ({
+                                weight: null,
+                                reps: null,
+                                duration: null,
+                                completed: false
+                            }))
+                        };
+                    }),
+                    inProgress: true
+                };
+
+                this.data.currentSession = session;
+                this.notify();
+                return session;
+            }
+
+            // Logs a workout as done today without going through the
+            // set-by-set session flow — for workouts with no exercises to
+            // track (e.g. Yoga) or when you just want a quick check-in.
+            // Does not touch currentSession, so it never conflicts with an
+            // actual in-progress workout.
+            logWorkoutDone(planId, workoutId) {
+                const plan = this.getPlan(planId);
+                const workout = this.getWorkout(planId, workoutId);
+                if (!plan || !workout) return null;
+
+                const now = new Date().toISOString();
+                const session = {
+                    id: generateId(),
+                    planId,
+                    planName: plan.name,
+                    workoutId,
+                    workoutName: workout.name,
+                    startedAt: now,
+                    completedAt: now,
+                    inProgress: false,
+                    exercises: workout.exercises.map(ex => {
+                        const setCount = Number.isInteger(ex.sets) && ex.sets > 0 ? ex.sets : 1;
+                        return {
+                            ...ex,
+                            completedSets: Array(setCount).fill(null).map(() => ({
+                                weight: null,
+                                reps: null,
+                                duration: null,
+                                completed: false
+                            }))
+                        };
+                    })
+                };
+
+                this.data.sessions.push(session);
+                this.notify();
+                return session;
+            }
+
+            getCurrentSession() {
+                return this.data.currentSession;
+            }
+
+            updateSessionExercise(exerciseIndex, setIndex, values) {
+                if (!this.data.currentSession) return;
+                const exercise = this.data.currentSession.exercises[exerciseIndex];
+                if (exercise && exercise.completedSets[setIndex]) {
+                    exercise.completedSets[setIndex] = {
+                        ...exercise.completedSets[setIndex],
+                        ...values,
+                        completed: true
+                    };
+                    this.notify();
+                }
+            }
+
+            completeSession() {
+                if (!this.data.currentSession) return;
+
+                const session = {
+                    ...this.data.currentSession,
+                    inProgress: false,
+                    completedAt: new Date().toISOString()
+                };
+
+                this.data.sessions.push(session);
+                this.data.currentSession = null;
+                this.notify();
+                return session;
+            }
+
+            resumeSession() {
+                if (this.data.currentSession) {
+                    this.data.currentSession.inProgress = true;
+                    this.notify();
+                }
+            }
+
+            abandonSession() {
+                this.data.currentSession = null;
+                this.notify();
+            }
+
+            getSessions() {
+                return this.data.sessions.sort((a, b) =>
+                    new Date(b.completedAt) - new Date(a.completedAt)
+                );
+            }
+
+            getSession(id) {
+                return this.data.sessions.find(s => s.id === id);
+            }
+
+            // Backup / restore
+            exportData() {
+                return JSON.stringify(this.data, null, 2);
+            }
+
+            importData(jsonString) {
+                const parsed = JSON.parse(jsonString);
+                if (!parsed || !Array.isArray(parsed.plans) || !Array.isArray(parsed.sessions)) {
+                    throw new Error('This file does not look like a valid workout backup.');
+                }
+                this.data = {
+                    plans: parsed.plans,
+                    sessions: parsed.sessions,
+                    currentSession: parsed.currentSession || null
+                };
+                this.notify();
+            }
+
+            // Persistence
+            saveToStorage() {
+                try {
+                    localStorage.setItem('workout_app_state', JSON.stringify(this.data));
+                } catch (e) {
+                    console.error('Failed to save to storage:', e);
+                }
+            }
+
+            loadFromStorage() {
+                try {
+                    const stored = localStorage.getItem('workout_app_state');
+                    if (stored) {
+                        this.data = JSON.parse(stored);
+                    }
+                } catch (e) {
+                    console.error('Failed to load from storage:', e);
+                }
+            }
+        }
+
+        const store = new WorkoutStore();
+
+        // ==================== Hooks ====================
+
+        function useStore() {
+            const [state, setState] = useState(store.data);
+
+            useEffect(() => {
+                const unsubscribe = store.subscribe(() => {
+                    setState({ ...store.data });
+                });
+                return unsubscribe;
+            }, []);
+
+            return state;
+        }
+
+        function useNavigation() {
+            const [currentScreen, setCurrentScreen] = useState('home');
+            return { currentScreen, setCurrentScreen };
+        }
+
+        // ==================== Components ====================
+
+        function HomeScreen({ onNavigate, state }) {
+            const plans = state.plans;
+            const currentSession = state.currentSession;
+            const fileInputRef = useRef(null);
+            const [importMessage, setImportMessage] = useState(null);
+
+            const handleCreatePlan = () => {
+                onNavigate('create-plan');
+            };
+
+            const handleSelectPlan = (planId) => {
+                onNavigate('plan-details', { planId });
+            };
+
+            const handleResumeWorkout = () => {
+                onNavigate('workout', { resuming: true });
+            };
+
+            const handleExport = () => {
+                downloadBackupFile();
+            };
+
+            const handleImportClick = () => {
+                fileInputRef.current?.click();
+            };
+
+            const handleImportFile = (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        if (!window.confirm('Importing will replace all current data with this backup. Continue?')) {
+                            return;
+                        }
+                        store.importData(reader.result);
+                        setImportMessage({ type: 'success', text: 'Backup restored successfully.' });
+                    } catch (err) {
+                        setImportMessage({ type: 'error', text: err.message || 'Could not read this backup file.' });
+                    }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            };
+
+            const greeting = (() => {
+                const hour = new Date().getHours();
+                if (hour < 12) return 'Good morning';
+                if (hour < 18) return 'Good afternoon';
+                return 'Good evening';
+            })();
+
+            return (
+                <div className="screen active home-screen">
+                    <div style={{ paddingTop: '16px' }}>
+                        <div className="greeting">
+                            {greeting}
+                        </div>
+
+                        {currentSession && (
+                            <div
+                                className="card card-hover mt-md"
+                                style={{ cursor: 'pointer' }}
+                                onClick={handleResumeWorkout}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <div className="text-h4">📋 Resume Workout</div>
+                                    <span style={{ fontSize: '20px' }}>→</span>
+                                </div>
+                                <div className="text-caption">
+                                    {currentSession.workoutName}
+                                </div>
+                            </div>
+                        )}
+
+                        <div style={{ marginTop: currentSession ? '24px' : '16px', marginBottom: '12px' }}>
+                            <div className="text-h3">Your Plans</div>
+                        </div>
+
+                        {plans.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">💪</div>
+                                <div className="empty-state-text">No workout plans yet. Create your first plan to get started.</div>
+                            </div>
+                        ) : (
+                            <div className="plans-list">
+                                {plans.map(plan => (
+                                    <div
+                                        key={plan.id}
+                                        className="plan-card card-hover"
+                                        onClick={() => handleSelectPlan(plan.id)}
+                                    >
+                                        <div className="plan-card-header">
+                                            <div className="plan-card-name">{plan.name}</div>
+                                            <div className="plan-card-count">{plan.workouts.length} workouts</div>
+                                        </div>
+                                        {plan.workouts.length > 0 && (
+                                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                                {plan.workouts.map(w => w.name).join(', ')}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <button className="btn btn-primary btn-block mt-lg" onClick={handleCreatePlan}>
+                            + Create Plan
+                        </button>
+
+                        {importMessage && (
+                            <div
+                                className="text-caption mt-md"
+                                style={{ color: importMessage.type === 'error' ? 'var(--danger)' : 'var(--success)' }}
+                            >
+                                {importMessage.text}
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '24px', marginBottom: '80px' }}>
+                            <button
+                                onClick={handleExport}
+                                className="text-caption"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                Export backup
+                            </button>
+                            <button
+                                onClick={handleImportClick}
+                                className="text-caption"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                Import backup
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="application/json"
+                                onChange={handleImportFile}
+                                style={{ display: 'none' }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function PlanDetailsScreen({ onNavigate, planId, state }) {
+            const plan = state.plans.find(p => p.id === planId);
+
+            if (!plan) {
+                return <div className="screen active" style={{ padding: '20px' }}>Plan not found</div>;
+            }
+
+            const handleStartWorkout = (workoutId) => {
+                const existing = state.currentSession;
+                if (existing && existing.inProgress) {
+                    const proceed = window.confirm(
+                        `You have an unfinished workout ("${existing.workoutName}"). Starting a new one will discard it. Continue?`
+                    );
+                    if (!proceed) return;
+                }
+                store.startWorkout(planId, workoutId);
+                downloadBackupFile();
+                onNavigate('workout');
+            };
+
+            const handleDuplicateWorkout = (workoutId) => {
+                store.duplicateWorkout(planId, workoutId);
+                downloadBackupFile();
+            };
+
+            const handleMarkDone = (workoutId, workoutName) => {
+                if (window.confirm(`Log "${workoutName}" as done today? This won't record individual sets.`)) {
+                    const session = store.logWorkoutDone(planId, workoutId);
+                    downloadBackupFile();
+                    onNavigate('session-detail', { sessionId: session?.id });
+                }
+            };
+
+            const handleEditPlan = () => {
+                onNavigate('edit-plan', { planId });
+            };
+
+            return (
+                <div className="screen active" style={{ padding: '16px' }}>
+                    <div style={{ marginBottom: '16px' }}>
+                        <button
+                            onClick={() => onNavigate('home')}
+                            style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '16px', marginBottom: '12px', cursor: 'pointer' }}
+                        >
+                            ← Back
+                        </button>
+                        <div className="text-h2">{plan.name}</div>
+                    </div>
+
+                    {plan.workouts.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-state-icon">📚</div>
+                            <div className="empty-state-text">No workouts in this plan yet.</div>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '80px' }}>
+                            {plan.workouts.map(workout => (
+                                <div key={workout.id} className="card">
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <div className="text-h4">{workout.name}</div>
+                                    </div>
+                                    <div className="text-caption" style={{ marginBottom: '12px' }}>
+                                        {workout.exercises.length === 0 ? 'No exercises' : `${workout.exercises.length} exercises`}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        <button
+                                            className="btn btn-primary btn-block"
+                                            onClick={() => handleStartWorkout(workout.id)}
+                                            style={{ flex: '2 1 140px' }}
+                                        >
+                                            Start Workout
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={() => handleMarkDone(workout.id, workout.name)}
+                                            title="Log as done without tracking sets"
+                                            style={{ flex: '1 1 80px' }}
+                                        >
+                                            ✓ Done
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={() => handleDuplicateWorkout(workout.id)}
+                                            title="Duplicate this workout"
+                                            style={{ flex: '1 1 80px' }}
+                                        >
+                                            ⧉ Duplicate
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <button className="btn btn-secondary btn-block mt-lg" onClick={handleEditPlan} style={{ marginBottom: '80px' }}>
+                        Edit Plan
+                    </button>
+                </div>
+            );
+        }
+
+        function useElapsedTime(startedAt) {
+            const [elapsed, setElapsed] = useState('0:00');
+
+            useEffect(() => {
+                const start = new Date(startedAt).getTime();
+                const tick = () => {
+                    const secs = Math.max(0, Math.floor((Date.now() - start) / 1000));
+                    const h = Math.floor(secs / 3600);
+                    const m = Math.floor((secs % 3600) / 60);
+                    const s = secs % 60;
+                    const mm = h > 0 ? String(m).padStart(2, '0') : m;
+                    const ss = String(s).padStart(2, '0');
+                    setElapsed(h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`);
+                };
+                tick();
+                const interval = setInterval(tick, 1000);
+                return () => clearInterval(interval);
+            }, [startedAt]);
+
+            return elapsed;
+        }
+
+        function WorkoutSessionScreen({ onNavigate, state, resuming }) {
+            const session = state.currentSession;
+            const elapsed = useElapsedTime(session?.startedAt || Date.now());
+
+            if (!session) {
+                return (
+                    <div className="screen active" style={{ padding: '20px', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '32px', marginBottom: '16px' }}>No active workout</div>
+                            <button className="btn btn-primary" onClick={() => onNavigate('home')}>
+                                Back to Home
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const handleCompleteSet = (exerciseIndex, setIndex, values) => {
+                store.updateSessionExercise(exerciseIndex, setIndex, values);
+            };
+
+            const totalSets = session.exercises.reduce((sum, ex) => sum + ex.completedSets.length, 0);
+            const completedCount = session.exercises.reduce(
+                (sum, ex) => sum + ex.completedSets.filter(s => s.completed).length,
+                0
+            );
+            const allSetsCompleted = totalSets > 0 && completedCount === totalSets;
+            const progressPercent = totalSets > 0 ? Math.round((completedCount / totalSets) * 100) : 0;
+
+            const handleFinishWorkout = () => {
+                const message = allSetsCompleted
+                    ? 'Finish this workout? Your data will be saved to history.'
+                    : 'Some sets are not marked complete. Finish anyway? Unrecorded sets will be saved as skipped.';
+                if (window.confirm(message)) {
+                    const finished = store.completeSession();
+                    downloadBackupFile();
+                    onNavigate('workout-complete', { sessionId: finished?.id });
+                }
+            };
+
+            const handlePauseWorkout = () => {
+                onNavigate('home');
+            };
+
+            return (
+                <div className="screen active" style={{ padding: '16px', paddingBottom: '140px' }}>
+                    <div style={{ marginBottom: '16px', position: 'sticky', top: '0', background: 'var(--bg-primary)', paddingTop: '8px', paddingBottom: '8px', zIndex: '50' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                    {session.planName} — {session.workoutName}
+                                </div>
+                                <div className="text-h3" style={{ marginTop: '4px' }}>Workout</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Elapsed</div>
+                                <div style={{ fontSize: '20px', fontWeight: 700, fontFeatureSettings: '"tnum"' }}>{elapsed}</div>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+                            <span className="text-caption">{completedCount} / {totalSets} sets</span>
+                            <span className="text-caption">{progressPercent}%</span>
+                        </div>
+                        <div className="session-progress-track">
+                            <div className="session-progress-fill" style={{ width: `${progressPercent}%` }}></div>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {session.exercises.map((exercise, exIndex) => (
+                            <ExerciseSetRecorder
+                                key={exercise.id}
+                                exercise={exercise}
+                                allExercises={session.exercises}
+                                exerciseIndex={exIndex}
+                                onCompleteSet={handleCompleteSet}
+                            />
+                        ))}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+                        <button
+                            className="btn btn-primary btn-block"
+                            onClick={handleFinishWorkout}
+                        >
+                            ✓ Finish Workout
+                        </button>
+                        <button className="btn btn-secondary btn-block" onClick={handlePauseWorkout}>
+                            Pause & Resume Later
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function ExerciseSetRecorder({ exercise, allExercises, exerciseIndex, onCompleteSet }) {
+            const targetText = (() => {
+                if (exercise.type === 'weighted') {
+                    return `Target: ${exercise.sets} × ${exercise.reps} @ ${exercise.weight}kg`;
+                }
+                if (exercise.type === 'bodyweight') {
+                    return `Target: ${exercise.sets} × ${exercise.reps} reps`;
+                }
+                return `Target: ${exercise.sets} × ${exercise.duration}s`;
+            })();
+
+            const partner = allExercises ? getSupersetPartner(allExercises, exercise) : null;
+
+            return (
+                <div style={exercise.supersetId ? { borderLeft: '3px solid var(--accent)', paddingLeft: '10px' } : undefined}>
+                    <div style={{ marginBottom: '12px' }}>
+                        {partner && (
+                            <div className="text-caption" style={{ color: 'var(--accent)', fontWeight: 600, marginBottom: '4px' }}>
+                                🔗 SUPERSET — then {partner.name}
+                            </div>
+                        )}
+                        <div className="text-h4">{exercise.name}</div>
+                        <div className="text-caption" style={{ marginTop: '4px' }}>
+                            {targetText}
+                        </div>
+                        <div className="set-dots">
+                            {exercise.completedSets.map((set, i) => (
+                                <div key={i} className={`set-dot ${set.completed ? 'filled' : ''}`}></div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {exercise.completedSets.map((set, setIndex) => (
+                        <SetInputCard
+                            key={setIndex}
+                            setNumber={setIndex + 1}
+                            set={set}
+                            exercise={exercise}
+                            exerciseIndex={exerciseIndex}
+                            setIndex={setIndex}
+                            onComplete={onCompleteSet}
+                        />
+                    ))}
+                </div>
+            );
+        }
+
+        function SetInputCard({ setNumber, set, exercise, exerciseIndex, setIndex, onComplete }) {
+            const [weight, setWeight] = useState(set.weight?.toString() || exercise.weight?.toString() || '');
+            const [reps, setReps] = useState(set.reps?.toString() || exercise.reps?.toString() || '');
+            const [duration, setDuration] = useState(set.duration?.toString() || exercise.duration?.toString() || '');
+            const [pulsing, setPulsing] = useState(false);
+
+            const step = (setter, current, delta, min = 0) => {
+                const num = parseFloat(current) || 0;
+                const next = Math.max(min, num + delta);
+                setter(next % 1 === 0 ? next.toString() : next.toFixed(1));
+            };
+
+            const handleComplete = () => {
+                const values = {
+                    weight: weight ? parseFloat(weight) : null,
+                    reps: reps ? parseInt(reps) : null,
+                    duration: duration ? parseInt(duration) : null
+                };
+                onComplete(exerciseIndex, setIndex, values);
+                setPulsing(true);
+                setTimeout(() => setPulsing(false), 320);
+
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                }
+            };
+
+            const isCompleted = set.completed;
+
+            return (
+                <div className="set-recorder">
+                    <div className="set-recorder-header">
+                        <div className="set-number">Set {setNumber}</div>
+                        <div className={`set-status ${isCompleted ? 'completed' : ''}`}>
+                            {isCompleted ? '✓' : ''}
+                        </div>
+                    </div>
+
+                    <div className="set-inputs">
+                        {exercise.type === 'weighted' && (
+                            <div className="set-input-row">
+                                <div className="set-input-group">
+                                    <label className="set-input-label">Weight</label>
+                                    <div className="set-input-value">
+                                        <button className="stepper-btn" onClick={() => step(setWeight, weight, -2.5)}>−</button>
+                                        <input
+                                            type="number"
+                                            step="0.5"
+                                            value={weight}
+                                            onChange={(e) => setWeight(e.target.value)}
+                                            placeholder="0"
+                                        />
+                                        <button className="stepper-btn" onClick={() => step(setWeight, weight, 2.5)}>+</button>
+                                        <span className="set-input-unit">kg</span>
+                                    </div>
+                                </div>
+                                <div className="set-input-group">
+                                    <label className="set-input-label">Reps</label>
+                                    <div className="set-input-value">
+                                        <button className="stepper-btn" onClick={() => step(setReps, reps, -1)}>−</button>
+                                        <input
+                                            type="number"
+                                            value={reps}
+                                            onChange={(e) => setReps(e.target.value)}
+                                            placeholder="0"
+                                        />
+                                        <button className="stepper-btn" onClick={() => step(setReps, reps, 1)}>+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {exercise.type === 'bodyweight' && (
+                            <div className="set-input-group">
+                                <label className="set-input-label">Reps</label>
+                                <div className="set-input-value">
+                                    <button className="stepper-btn" onClick={() => step(setReps, reps, -1)}>−</button>
+                                    <input
+                                        type="number"
+                                        value={reps}
+                                        onChange={(e) => setReps(e.target.value)}
+                                        placeholder="0"
+                                    />
+                                    <button className="stepper-btn" onClick={() => step(setReps, reps, 1)}>+</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {exercise.type === 'time_based' && (
+                            <div className="set-input-group">
+                                <label className="set-input-label">Duration</label>
+                                <div className="set-input-value">
+                                    <button className="stepper-btn" onClick={() => step(setDuration, duration, -5)}>−</button>
+                                    <input
+                                        type="number"
+                                        value={duration}
+                                        onChange={(e) => setDuration(e.target.value)}
+                                        placeholder="0"
+                                    />
+                                    <button className="stepper-btn" onClick={() => step(setDuration, duration, 5)}>+</button>
+                                    <span className="set-input-unit">sec</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <button className={`set-complete-btn ${pulsing ? 'completed-pulse' : ''}`} onClick={handleComplete}>
+                        {isCompleted ? 'Edit' : 'Complete Set'}
+                    </button>
+                </div>
+            );
+        }
+
+        function HistoryScreen({ onNavigate, state }) {
+            const sessions = [...state.sessions].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+
+            const handleViewSession = (sessionId) => {
+                onNavigate('session-detail', { sessionId });
+            };
+
+            return (
+                <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
+                    <div className="text-h2" style={{ marginBottom: '16px' }}>History</div>
+
+                    {sessions.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-state-icon">📊</div>
+                            <div className="empty-state-text">No completed workouts yet.</div>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {sessions.map(session => (
+                                <div
+                                    key={session.id}
+                                    className="card card-hover"
+                                    onClick={() => handleViewSession(session.id)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div className="text-h4">{session.workoutName}</div>
+                                            <div className="text-caption">
+                                                {session.planName}
+                                            </div>
+                                        </div>
+                                        <span style={{ fontSize: '20px' }}>→</span>
+                                    </div>
+                                    <div className="text-caption">
+                                        {new Date(session.completedAt).toLocaleDateString(undefined, {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric'
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function SessionDetailScreen({ onNavigate, sessionId, state }) {
+            const session = state.sessions.find(s => s.id === sessionId);
+
+            if (!session) {
+                return <div className="screen active" style={{ padding: '20px' }}>Session not found</div>;
+            }
+
+            return (
+                <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
+                    <button
+                        onClick={() => onNavigate('history')}
+                        style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '16px', marginBottom: '12px', cursor: 'pointer' }}
+                    >
+                        ← Back
+                    </button>
+
+                    <div style={{ marginBottom: '16px' }}>
+                        <div className="text-h3">{session.workoutName}</div>
+                        <div className="text-caption" style={{ marginTop: '4px' }}>
+                            {session.planName}
+                        </div>
+                        <div className="text-caption" style={{ marginTop: '4px' }}>
+                            {new Date(session.completedAt).toLocaleDateString(undefined, {
+                                weekday: 'long',
+                                month: 'short',
+                                day: 'numeric'
+                            })}
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {session.exercises.map(exercise => {
+                            const partner = getSupersetPartner(session.exercises, exercise);
+                            return (
+                            <div
+                                key={exercise.id}
+                                className="card"
+                                style={exercise.supersetId ? { borderLeft: '3px solid var(--accent)' } : undefined}
+                            >
+                                {partner && (
+                                    <div className="text-caption" style={{ color: 'var(--accent)', fontWeight: 600, marginBottom: '6px' }}>
+                                        🔗 SUPERSET — with {partner.name}
+                                    </div>
+                                )}
+                                <div className="text-h4" style={{ marginBottom: '12px' }}>{exercise.name}</div>
+                                {exercise.completedSets.map((set, idx) => (
+                                    <div key={idx} style={{ marginBottom: idx < exercise.completedSets.length - 1 ? '8px' : '0' }}>
+                                        <div className="text-caption" style={{ color: set.completed ? 'var(--text-secondary)' : 'var(--text-tertiary)' }}>
+                                            Set {idx + 1}:
+                                            {!set.completed && ' Skipped'}
+                                            {set.completed && exercise.type === 'weighted' && ` ${set.weight}kg × ${set.reps} reps`}
+                                            {set.completed && exercise.type === 'bodyweight' && ` ${set.reps} reps`}
+                                            {set.completed && exercise.type === 'time_based' && ` ${set.duration}s`}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        function WorkoutCompleteScreen({ onNavigate, sessionId, state }) {
+            const session = state.sessions.find(s => s.id === sessionId);
+
+            if (!session) {
+                return (
+                    <div className="screen active" style={{ padding: '20px', alignItems: 'center', justifyContent: 'center' }}>
+                        <button className="btn btn-primary" onClick={() => onNavigate('home')}>Back to Home</button>
+                    </div>
+                );
+            }
+
+            let totalSets = 0;
+            let completedSets = 0;
+            let totalVolume = 0;
+
+            session.exercises.forEach(ex => {
+                ex.completedSets.forEach(set => {
+                    totalSets += 1;
+                    if (set.completed) {
+                        completedSets += 1;
+                        if (ex.type === 'weighted' && set.weight != null && set.reps != null) {
+                            totalVolume += set.weight * set.reps;
+                        }
+                    }
+                });
+            });
+
+            const durationMin = Math.max(0, Math.round(
+                (new Date(session.completedAt) - new Date(session.startedAt)) / 60000
+            ));
+
+            return (
+                <div className="screen active" style={{ padding: '16px', alignItems: 'center', paddingTop: '60px' }}>
+                    <div className="complete-checkmark">✓</div>
+                    <div className="text-h2" style={{ marginTop: '20px', textAlign: 'center' }}>Workout Complete</div>
+                    <div className="text-caption" style={{ marginTop: '4px', textAlign: 'center' }}>
+                        {session.planName} — {session.workoutName}
+                    </div>
+
+                    <div className="card" style={{ width: '100%', marginTop: '28px' }}>
+                        <div className="stat-row">
+                            <span className="text-caption">Duration</span>
+                            <span className="stat-value">{durationMin} min</span>
+                        </div>
+                        <div className="stat-row">
+                            <span className="text-caption">Sets completed</span>
+                            <span className="stat-value">{completedSets} / {totalSets}</span>
+                        </div>
+                        {totalVolume > 0 && (
+                            <div className="stat-row">
+                                <span className="text-caption">Total volume</span>
+                                <span className="stat-value">{totalVolume.toLocaleString()} kg</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <button
+                        className="btn btn-primary btn-block mt-lg"
+                        onClick={() => onNavigate('home')}
+                        style={{ width: '100%' }}
+                    >
+                        Done
+                    </button>
+                    <button
+                        className="btn btn-secondary btn-block mt-md"
+                        onClick={() => onNavigate('session-detail', { sessionId })}
+                        style={{ width: '100%' }}
+                    >
+                        View Details
+                    </button>
+                </div>
+            );
+        }
+
+        function CreatePlanModal({ onClose, store }) {
+            const [step, setStep] = useState('name'); // name, workouts, done
+            const [planName, setPlanName] = useState('');
+            const [workouts, setWorkouts] = useState([]);
+            const [currentWorkout, setCurrentWorkout] = useState({ name: '', exercises: [] });
+            const [currentExercise, setCurrentExercise] = useState(null);
+
+            const handleCreatePlan = () => {
+                if (planName.trim() && workouts.length > 0) {
+                    const plan = store.createPlan(planName);
+                    workouts.forEach(workout => {
+                        const w = store.addWorkout(plan.id, workout.name);
+                        workout.exercises.forEach(exercise => {
+                            store.addExercise(plan.id, w.id, exercise);
+                        });
+                    });
+                    downloadBackupFile();
+                    onClose();
+                }
+            };
+
+            if (step === 'name') {
+                return (
+                    <div className="modal-overlay">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <div className="modal-title">Create Plan</div>
+                                <button className="modal-close-btn" onClick={onClose}>✕</button>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div>
+                                    <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Plan Name</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        placeholder="e.g., Full Body"
+                                        value={planName}
+                                        onChange={(e) => setPlanName(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <button
+                                    className="btn btn-primary btn-block"
+                                    onClick={() => setStep('workouts')}
+                                    disabled={!planName.trim()}
+                                >
+                                    Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (step === 'workouts') {
+                return (
+                    <div className="modal-overlay">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <div className="modal-title">{planName}</div>
+                                <button className="modal-close-btn" onClick={onClose}>✕</button>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                {currentExercise ? (
+                                    // Exercise editor
+                                    <ExerciseEditor
+                                        onAdd={(exercise) => {
+                                            setCurrentWorkout({
+                                                ...currentWorkout,
+                                                exercises: [...currentWorkout.exercises, exercise]
+                                            });
+                                            setCurrentExercise(null);
+                                        }}
+                                        onClose={() => setCurrentExercise(null)}
+                                    />
+                                ) : (
+                                    <>
+                                        <div>
+                                            <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Workout Name</label>
+                                            <input
+                                                type="text"
+                                                className="input-field"
+                                                placeholder="e.g., Workout A"
+                                                value={currentWorkout.name}
+                                                onChange={(e) => setCurrentWorkout({ ...currentWorkout, name: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <div className="text-h4" style={{ marginBottom: '4px' }}>Exercises</div>
+                                            <div className="text-caption" style={{ marginBottom: '12px' }}>
+                                                Optional — leave empty for unstructured workouts like Yoga.
+                                            </div>
+                                            {currentWorkout.exercises.map((ex, idx) => (
+                                                <div key={idx} className="card" style={{ marginBottom: '8px' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <div>
+                                                            <div className="text-body">{ex.name}</div>
+                                                            <div className="text-caption">
+                                                                {ex.sets}x {ex.reps || ex.duration}
+                                                                {ex.type === 'weighted' && ` @ ${ex.weight}kg`}
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            className="btn btn-danger btn-sm"
+                                                            onClick={() => {
+                                                                setCurrentWorkout({
+                                                                    ...currentWorkout,
+                                                                    exercises: currentWorkout.exercises.filter((_, i) => i !== idx)
+                                                                });
+                                                            }}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <button
+                                                className="btn btn-secondary btn-block"
+                                                onClick={() => setCurrentExercise({})}
+                                            >
+                                                + Add Exercise
+                                            </button>
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                            <button
+                                                className="btn btn-secondary btn-block"
+                                                onClick={() => {
+                                                    if (currentWorkout.name.trim()) {
+                                                        setWorkouts([...workouts, currentWorkout]);
+                                                        setCurrentWorkout({ name: '', exercises: [] });
+                                                    }
+                                                }}
+                                                disabled={!currentWorkout.name.trim()}
+                                            >
+                                                Add Workout
+                                            </button>
+                                            <button
+                                                className="btn btn-primary btn-block"
+                                                onClick={() => setStep('done')}
+                                                disabled={workouts.length === 0}
+                                            >
+                                                Done ({workouts.length})
+                                            </button>
+                                        </div>
+
+                                        {workouts.length > 0 && (
+                                            <div>
+                                                <div className="text-h4" style={{ marginBottom: '12px' }}>Added Workouts</div>
+                                                {workouts.map((w, idx) => (
+                                                    <div key={idx} className="card" style={{ marginBottom: '8px' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <div>
+                                                                <div className="text-body">{w.name}</div>
+                                                                <div className="text-caption">{w.exercises.length === 0 ? 'No exercises' : `${w.exercises.length} exercises`}</div>
+                                                            </div>
+                                                            <button
+                                                                className="btn btn-danger btn-sm"
+                                                                onClick={() => {
+                                                                    setWorkouts(workouts.filter((_, i) => i !== idx));
+                                                                }}
+                                                            >
+                                                                Remove
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <div className="modal-title">Review Plan</div>
+                            <button className="modal-close-btn" onClick={onClose}>✕</button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div>
+                                <div className="text-h4" style={{ marginBottom: '8px' }}>{planName}</div>
+                                <div className="text-caption">{workouts.length} workouts</div>
+                            </div>
+
+                            {workouts.map((w, idx) => (
+                                <div key={idx} className="card">
+                                    <div className="text-h4" style={{ marginBottom: '8px' }}>{w.name}</div>
+                                    <div className="text-caption">{w.exercises.length} exercises</div>
+                                </div>
+                            ))}
+
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button className="btn btn-secondary btn-block" onClick={() => setStep('workouts')}>
+                                    Back
+                                </button>
+                                <button className="btn btn-primary btn-block" onClick={handleCreatePlan}>
+                                    Create Plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function ExerciseEditor({ onAdd, onClose, initial }) {
+            const [name, setName] = useState(initial?.name || '');
+            const [type, setType] = useState(initial?.type || 'weighted');
+            const [sets, setSets] = useState(initial?.sets?.toString() || '3');
+            const [reps, setReps] = useState(initial?.reps?.toString() || '8');
+            const [duration, setDuration] = useState(initial?.duration?.toString() || '30');
+            const [weight, setWeight] = useState(initial?.weight?.toString() || '');
+
+            const setsNum = parseInt(sets, 10);
+            const repsNum = parseInt(reps, 10);
+            const durationNum = parseInt(duration, 10);
+            const weightNum = parseFloat(weight);
+
+            const isValid = (() => {
+                if (!name.trim()) return false;
+                if (!Number.isInteger(setsNum) || setsNum < 1) return false;
+                if (type === 'weighted') {
+                    return Number.isInteger(repsNum) && repsNum >= 1 && !isNaN(weightNum) && weightNum >= 0;
+                }
+                if (type === 'bodyweight') {
+                    return Number.isInteger(repsNum) && repsNum >= 1;
+                }
+                return Number.isInteger(durationNum) && durationNum >= 1;
+            })();
+
+            const handleAdd = () => {
+                if (!isValid) return;
+                const exercise = {
+                    name: name.trim(),
+                    type,
+                    sets: setsNum,
+                    reps: type === 'weighted' || type === 'bodyweight' ? repsNum : null,
+                    duration: type === 'time_based' ? durationNum : null,
+                    weight: type === 'weighted' ? weightNum : null
+                };
+                onAdd(exercise);
+            };
+
+            return (
+                <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div>
+                            <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Exercise Name</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="e.g., Bench Press"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Type</label>
+                            <select
+                                className="input-field"
+                                value={type}
+                                onChange={(e) => setType(e.target.value)}
+                                style={{ appearance: 'none', paddingRight: '32px' }}
+                            >
+                                <option value="weighted">Weighted</option>
+                                <option value="bodyweight">Bodyweight</option>
+                                <option value="time_based">Time-based</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Sets</label>
+                            <input
+                                type="number"
+                                className="input-field"
+                                value={sets}
+                                onChange={(e) => setSets(e.target.value)}
+                            />
+                        </div>
+
+                        {(type === 'weighted' || type === 'bodyweight') && (
+                            <div>
+                                <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Target Reps</label>
+                                <input
+                                    type="number"
+                                    className="input-field"
+                                    value={reps}
+                                    onChange={(e) => setReps(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        {type === 'time_based' && (
+                            <div>
+                                <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Target Duration (seconds)</label>
+                                <input
+                                    type="number"
+                                    className="input-field"
+                                    value={duration}
+                                    onChange={(e) => setDuration(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        {type === 'weighted' && (
+                            <div>
+                                <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Target Weight (kg)</label>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    className="input-field"
+                                    placeholder="0"
+                                    value={weight}
+                                    onChange={(e) => setWeight(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button className="btn btn-secondary btn-block" onClick={onClose}>
+                                Cancel
+                            </button>
+                            <button className="btn btn-primary btn-block" onClick={handleAdd} disabled={!isValid}>
+                                {initial ? 'Save Changes' : 'Add Exercise'}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function EditPlanScreen({ onNavigate, planId, state }) {
+            const plan = state.plans.find(p => p.id === planId);
+            const [name, setName] = useState(plan?.name || '');
+            const [addingWorkout, setAddingWorkout] = useState(false);
+            const [newWorkoutName, setNewWorkoutName] = useState('');
+
+            if (!plan) {
+                return <div className="screen active" style={{ padding: '20px' }}>Plan not found</div>;
+            }
+
+            const handleRenamePlan = () => {
+                if (name.trim() && name.trim() !== plan.name) {
+                    store.updatePlan(planId, { name: name.trim() });
+                    downloadBackupFile();
+                }
+            };
+
+            const handleAddWorkout = () => {
+                if (newWorkoutName.trim()) {
+                    store.addWorkout(planId, newWorkoutName.trim());
+                    setNewWorkoutName('');
+                    setAddingWorkout(false);
+                    downloadBackupFile();
+                }
+            };
+
+            const handleDuplicateWorkout = (workoutId) => {
+                store.duplicateWorkout(planId, workoutId);
+                downloadBackupFile();
+            };
+
+            const handleDeleteWorkout = (workoutId, workoutName) => {
+                if (window.confirm(`Delete "${workoutName}"? This cannot be undone.`)) {
+                    store.deleteWorkout(planId, workoutId);
+                    downloadBackupFile();
+                }
+            };
+
+            const handleDeletePlan = () => {
+                if (window.confirm(`Delete the entire "${plan.name}" plan? This cannot be undone.`)) {
+                    store.deletePlan(planId);
+                    downloadBackupFile();
+                    onNavigate('home');
+                }
+            };
+
+            const handleMoveWorkout = (index, direction) => {
+                const newIndex = index + direction;
+                if (newIndex < 0 || newIndex >= plan.workouts.length) return;
+                const workouts = [...plan.workouts];
+                [workouts[index], workouts[newIndex]] = [workouts[newIndex], workouts[index]];
+                store.reorderWorkouts(planId, workouts);
+                downloadBackupFile();
+            };
+
+            return (
+                <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
+                    <button
+                        onClick={() => onNavigate('plan-details', { planId })}
+                        style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '16px', marginBottom: '12px', cursor: 'pointer' }}
+                    >
+                        ← Back
+                    </button>
+
+                    <div className="text-h2" style={{ marginBottom: '16px' }}>Edit Plan</div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Plan Name</label>
+                        <input
+                            type="text"
+                            className="input-field"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            onBlur={handleRenamePlan}
+                        />
+                    </div>
+
+                    <div className="text-h4" style={{ marginBottom: '4px' }}>Workouts</div>
+                    <div className="text-caption" style={{ marginBottom: '12px' }}>
+                        Use the arrows to change the order workouts appear in.
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+                        {plan.workouts.map((workout, idx) => (
+                            <div key={workout.id} className="card">
+                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                    <div>
+                                        <div className="text-body" style={{ fontWeight: 600 }}>{workout.name}</div>
+                                        <div className="text-caption">
+                                            {workout.exercises.length === 0 ? 'No exercises' : `${workout.exercises.length} exercises`}
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                        <button
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={() => handleMoveWorkout(idx, -1)}
+                                            disabled={idx === 0}
+                                            style={{ opacity: idx === 0 ? 0.4 : 1, padding: '8px 10px' }}
+                                        >
+                                            ↑
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={() => handleMoveWorkout(idx, 1)}
+                                            disabled={idx === plan.workouts.length - 1}
+                                            style={{ opacity: idx === plan.workouts.length - 1 ? 0.4 : 1, padding: '8px 10px' }}
+                                        >
+                                            ↓
+                                        </button>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    <button
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={() => onNavigate('edit-workout', { planId, workoutId: workout.id })}
+                                    >
+                                        Edit Exercises
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={() => handleDuplicateWorkout(workout.id)}
+                                    >
+                                        ⧉ Duplicate
+                                    </button>
+                                    <button
+                                        className="btn btn-danger btn-sm"
+                                        onClick={() => handleDeleteWorkout(workout.id, workout.name)}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {addingWorkout ? (
+                        <div className="card" style={{ marginBottom: '16px' }}>
+                            <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>New Workout Name</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="e.g., Workout B"
+                                value={newWorkoutName}
+                                onChange={(e) => setNewWorkoutName(e.target.value)}
+                                autoFocus
+                                style={{ marginBottom: '12px' }}
+                            />
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button className="btn btn-secondary btn-block" onClick={() => { setAddingWorkout(false); setNewWorkoutName(''); }}>
+                                    Cancel
+                                </button>
+                                <button className="btn btn-primary btn-block" onClick={handleAddWorkout} disabled={!newWorkoutName.trim()}>
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button className="btn btn-secondary btn-block mb-md" onClick={() => setAddingWorkout(true)}>
+                            + Add Workout
+                        </button>
+                    )}
+
+                    <button className="btn btn-danger btn-block mt-lg" onClick={handleDeletePlan}>
+                        Delete Plan
+                    </button>
+                </div>
+            );
+        }
+
+        function EditWorkoutScreen({ onNavigate, planId, workoutId, state }) {
+            const plan = state.plans.find(p => p.id === planId);
+            const workout = plan?.workouts.find(w => w.id === workoutId);
+            const [name, setName] = useState(workout?.name || '');
+            const [addingExercise, setAddingExercise] = useState(false);
+            const [editingExerciseId, setEditingExerciseId] = useState(null);
+
+            if (!plan || !workout) {
+                return <div className="screen active" style={{ padding: '20px' }}>Workout not found</div>;
+            }
+
+            const handleRenameWorkout = () => {
+                if (name.trim() && name.trim() !== workout.name) {
+                    store.updateWorkout(planId, workoutId, { name: name.trim() });
+                    downloadBackupFile();
+                }
+            };
+
+            const handleAddExercise = (exercise) => {
+                store.addExercise(planId, workoutId, exercise);
+                setAddingExercise(false);
+                downloadBackupFile();
+            };
+
+            const handleSaveExercise = (exerciseId, updates) => {
+                store.updateExercise(planId, workoutId, exerciseId, updates);
+                setEditingExerciseId(null);
+                downloadBackupFile();
+            };
+
+            const handleDeleteExercise = (exerciseId, exerciseName) => {
+                if (window.confirm(`Remove "${exerciseName}" from this workout?`)) {
+                    store.deleteExercise(planId, workoutId, exerciseId);
+                    downloadBackupFile();
+                }
+            };
+
+            const handleMoveExercise = (index, direction) => {
+                const newIndex = index + direction;
+                if (newIndex < 0 || newIndex >= workout.exercises.length) return;
+                const exercises = [...workout.exercises];
+                [exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]];
+                store.reorderExercises(planId, workoutId, exercises);
+                downloadBackupFile();
+            };
+
+            const handleLinkSuperset = (exerciseId) => {
+                store.linkSupersetWithNext(planId, workoutId, exerciseId);
+                downloadBackupFile();
+            };
+
+            const handleUnlinkSuperset = (exerciseId) => {
+                store.unlinkSuperset(planId, workoutId, exerciseId);
+                downloadBackupFile();
+            };
+
+            const editingExercise = editingExerciseId ? workout.exercises.find(e => e.id === editingExerciseId) : null;
+
+            return (
+                <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
+                    <button
+                        onClick={() => onNavigate('edit-plan', { planId })}
+                        style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '16px', marginBottom: '12px', cursor: 'pointer' }}
+                    >
+                        ← Back
+                    </button>
+
+                    <div className="text-h2" style={{ marginBottom: '16px' }}>Edit Workout</div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>Workout Name</label>
+                        <input
+                            type="text"
+                            className="input-field"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            onBlur={handleRenameWorkout}
+                        />
+                    </div>
+
+                    <div className="text-h4" style={{ marginBottom: '4px' }}>Exercises</div>
+                    <div className="text-caption" style={{ marginBottom: '12px' }}>
+                        Reorder with the arrows. Link two adjacent exercises as a superset to perform them back-to-back. This workout can also have no exercises.
+                    </div>
+
+                    {addingExercise ? (
+                        <div className="card" style={{ marginBottom: '16px' }}>
+                            <ExerciseEditor
+                                onAdd={handleAddExercise}
+                                onClose={() => setAddingExercise(false)}
+                            />
+                        </div>
+                    ) : editingExercise ? (
+                        <div className="card" style={{ marginBottom: '16px' }}>
+                            <ExerciseEditor
+                                initial={editingExercise}
+                                onAdd={(updates) => handleSaveExercise(editingExercise.id, updates)}
+                                onClose={() => setEditingExerciseId(null)}
+                            />
+                        </div>
+                    ) : (
+                        <>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                                {workout.exercises.map((ex, idx) => {
+                                    const nextEx = workout.exercises[idx + 1];
+                                    const partner = getSupersetPartner(workout.exercises, ex);
+                                    const linkedWithNext = partner && nextEx && partner.id === nextEx.id;
+                                    const canLinkWithNext = !ex.supersetId && nextEx && !nextEx.supersetId;
+
+                                    return (
+                                        <div
+                                            key={ex.id}
+                                            className="card"
+                                            style={ex.supersetId ? { borderLeft: '3px solid var(--accent)' } : undefined}
+                                        >
+                                            {ex.supersetId && (
+                                                <div className="text-caption" style={{ color: 'var(--accent)', fontWeight: 600, marginBottom: '6px' }}>
+                                                    🔗 SUPERSET — with {partner?.name}
+                                                </div>
+                                            )}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                                                <div>
+                                                    <div className="text-body" style={{ fontWeight: 600 }}>{ex.name}</div>
+                                                    <div className="text-caption">
+                                                        {ex.sets} sets
+                                                        {ex.type === 'weighted' && ` × ${ex.reps} reps @ ${ex.weight}kg`}
+                                                        {ex.type === 'bodyweight' && ` × ${ex.reps} reps`}
+                                                        {ex.type === 'time_based' && ` × ${ex.duration}s`}
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '4px' }}>
+                                                    <button
+                                                        className="btn btn-secondary btn-sm"
+                                                        onClick={() => handleMoveExercise(idx, -1)}
+                                                        disabled={idx === 0}
+                                                        style={{ opacity: idx === 0 ? 0.4 : 1, padding: '8px 10px' }}
+                                                    >
+                                                        ↑
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-secondary btn-sm"
+                                                        onClick={() => handleMoveExercise(idx, 1)}
+                                                        disabled={idx === workout.exercises.length - 1}
+                                                        style={{ opacity: idx === workout.exercises.length - 1 ? 0.4 : 1, padding: '8px 10px' }}
+                                                    >
+                                                        ↓
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px', marginBottom: (linkedWithNext || canLinkWithNext) ? '8px' : '0' }}>
+                                                <button
+                                                    className="btn btn-secondary btn-sm btn-block"
+                                                    onClick={() => setEditingExerciseId(ex.id)}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    className="btn btn-danger btn-sm btn-block"
+                                                    onClick={() => handleDeleteExercise(ex.id, ex.name)}
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                            {linkedWithNext && (
+                                                <button
+                                                    className="btn btn-secondary btn-sm btn-block"
+                                                    onClick={() => handleUnlinkSuperset(ex.id)}
+                                                >
+                                                    Unlink Superset
+                                                </button>
+                                            )}
+                                            {canLinkWithNext && (
+                                                <button
+                                                    className="btn btn-secondary btn-sm btn-block"
+                                                    onClick={() => handleLinkSuperset(ex.id)}
+                                                >
+                                                    🔗 Link as Superset with "{nextEx.name}"
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <button className="btn btn-secondary btn-block" onClick={() => setAddingExercise(true)}>
+                                + Add Exercise
+                            </button>
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const state = useStore();
+            const { currentScreen, setCurrentScreen } = useNavigation();
+            const [screenParams, setScreenParams] = useState({});
+
+            const handleNavigate = (screen, params = {}) => {
+                setCurrentScreen(screen);
+                setScreenParams(params);
+            };
+
+            const getGreeting = () => {
+                const hour = new Date().getHours();
+                if (hour < 12) return 'Home';
+                if (hour < 17) return 'Home';
+                return 'Home';
+            };
+
+            const currentSessionExists = state.currentSession?.inProgress;
+
+            return (
+                <div className="app-container">
+                    <div className="app-content">
+                        {currentScreen === 'home' && (
+                            <HomeScreen onNavigate={handleNavigate} state={state} />
+                        )}
+
+                        {currentScreen === 'plan-details' && (
+                            <PlanDetailsScreen
+                                onNavigate={handleNavigate}
+                                planId={screenParams.planId}
+                                state={state}
+                            />
+                        )}
+
+                        {currentScreen === 'edit-plan' && (
+                            <EditPlanScreen
+                                onNavigate={handleNavigate}
+                                planId={screenParams.planId}
+                                state={state}
+                            />
+                        )}
+
+                        {currentScreen === 'edit-workout' && (
+                            <EditWorkoutScreen
+                                onNavigate={handleNavigate}
+                                planId={screenParams.planId}
+                                workoutId={screenParams.workoutId}
+                                state={state}
+                            />
+                        )}
+
+                        {currentScreen === 'workout' && (
+                            <WorkoutSessionScreen
+                                onNavigate={handleNavigate}
+                                state={state}
+                                resuming={screenParams.resuming}
+                            />
+                        )}
+
+                        {currentScreen === 'history' && (
+                            <HistoryScreen onNavigate={handleNavigate} state={state} />
+                        )}
+
+                        {currentScreen === 'session-detail' && (
+                            <SessionDetailScreen
+                                onNavigate={handleNavigate}
+                                sessionId={screenParams.sessionId}
+                                state={state}
+                            />
+                        )}
+
+                        {currentScreen === 'workout-complete' && (
+                            <WorkoutCompleteScreen
+                                onNavigate={handleNavigate}
+                                sessionId={screenParams.sessionId}
+                                state={state}
+                            />
+                        )}
+
+                        {currentScreen === 'create-plan' && (
+                            <CreatePlanModal
+                                onClose={() => handleNavigate('home')}
+                                store={store}
+                            />
+                        )}
+                    </div>
+
+                    <div className="app-nav">
+                        <button
+                            className={`nav-item ${currentScreen === 'home' ? 'active' : ''}`}
+                            onClick={() => handleNavigate('home')}
+                        >
+                            <div className="nav-item-icon">🏠</div>
+                            <div>Home</div>
+                        </button>
+                        <button
+                            className={`nav-item ${currentScreen === 'history' ? 'active' : ''}`}
+                            onClick={() => handleNavigate('history')}
+                        >
+                            <div className="nav-item-icon">📊</div>
+                            <div>History</div>
+                        </button>
+                        {currentSessionExists && (
+                            <button
+                                className={`nav-item ${currentScreen === 'workout' ? 'active' : ''}`}
+                                onClick={() => handleNavigate('workout')}
+                                style={{ color: 'var(--success)' }}
+                            >
+                                <div className="nav-item-icon">⏱️</div>
+                                <div>Workout</div>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Render app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {
+                // Service worker not available or failed
+            });
+        }
+    </script>
+</body>
+</html>

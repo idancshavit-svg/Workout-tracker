@@ -43,7 +43,11 @@
         html, body {
             width: 100%;
             height: 100%;
-            background: var(--bg-primary);
+            background:
+                radial-gradient(circle at 12% -8%, rgba(0, 217, 255, 0.10), transparent 40%),
+                radial-gradient(circle at 100% 8%, rgba(167, 139, 250, 0.07), transparent 35%),
+                var(--bg-primary);
+            background-attachment: fixed;
             color: var(--text-primary);
             font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
             -webkit-font-smoothing: antialiased;
@@ -158,6 +162,11 @@
         .nav-item-icon {
             font-size: 24px;
             line-height: 1;
+            transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .nav-item.active .nav-item-icon {
+            transform: scale(1.12);
         }
 
         /* Screens */
@@ -173,8 +182,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 217, 255, 0.25); }
+            50% { box-shadow: 0 0 0 6px rgba(0, 217, 255, 0.08); }
         }
 
         /* Cards and containers */
@@ -187,12 +201,13 @@
         }
 
         .card-hover {
-            transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+            transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
         }
 
         .card-hover:active {
             background: var(--bg-tertiary);
             border-color: var(--border-light);
+            transform: scale(0.985);
         }
 
         /* Buttons */
@@ -242,6 +257,44 @@
             border-color: rgba(255, 51, 102, 0.4);
         }
 
+        .btn-outline-accent {
+            background: rgba(0, 217, 255, 0.08);
+            color: var(--accent);
+            border: 1px solid rgba(0, 217, 255, 0.25);
+        }
+
+        .btn-outline-accent:active {
+            background: rgba(0, 217, 255, 0.16);
+            border-color: rgba(0, 217, 255, 0.4);
+        }
+
+        /* Top-of-screen back button. Explicit align-self/display keeps it
+           pinned to the left edge and content-sized even when its parent is
+           a flex column with the default stretch behavior — plain <button>
+           elements center their own text once stretched, which otherwise
+           makes "Back" drift toward the middle of the screen. */
+        .back-btn {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 16px;
+            font-weight: 600;
+            padding: 6px 10px 6px 2px;
+            margin-bottom: 8px;
+            margin-left: -2px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .back-btn:active {
+            background: rgba(0, 217, 255, 0.08);
+        }
+
         .btn-sm {
             padding: 8px 12px;
             font-size: 13px;
@@ -251,13 +304,61 @@
             width: 100%;
         }
 
-        /* Typography */
-        .text-h1 {
-            font-size: 34px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+        /* Compact icon-only action buttons — used for frequent list-item
+           actions (reorder, edit, duplicate, delete) so cards stay dense
+           and scannable instead of being padded out with labeled buttons. */
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
         }
 
+        .icon-btn:active {
+            background: var(--bg-primary);
+            transform: scale(0.94);
+        }
+
+        .icon-btn:disabled {
+            cursor: default;
+        }
+
+        .icon-btn.danger {
+            color: var(--danger);
+        }
+
+        .icon-btn.danger:active {
+            background: rgba(255, 51, 102, 0.12);
+            border-color: rgba(255, 51, 102, 0.3);
+        }
+
+        .icon-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .icon-toolbar-divider {
+            width: 1px;
+            height: 18px;
+            background: var(--border-light);
+            flex-shrink: 0;
+            margin: 0 1px;
+        }
+
+        /* Typography */
+        /* Type scale intentionally starts at h2 — on a phone screen 28px is
+           already the largest heading anything needs, so there's no h1
+           tier hanging around unused. */
         .text-h2 {
             font-size: 28px;
             font-weight: 700;
@@ -312,6 +413,10 @@
             padding: 0 16px;
         }
 
+        /* Deliberate one-off "hero" style for the Home greeting — same size
+           as .text-h2 but light-weight and muted, so it reads as a quiet
+           greeting rather than a section header competing with "Your Plans"
+           right below it. Not part of the h2-h4 heading scale on purpose. */
         .greeting {
             font-size: 28px;
             font-weight: 300;
@@ -341,19 +446,25 @@
 
         .plan-card-header {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
+            gap: 8px;
             margin-bottom: 8px;
         }
 
         .plan-card-name {
             font-size: 18px;
             font-weight: 600;
+            flex: 1;
+            min-width: 0;
+            word-break: break-word;
         }
 
         .plan-card-count {
             font-size: 13px;
             color: var(--text-secondary);
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .plan-card-status {
@@ -429,29 +540,34 @@
         }
 
         .set-inputs {
-            display: grid;
-            gap: 8px;
-            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
         }
 
+        /* Mobile-first: weight and reps stack full-width so each gets
+           enough room for stepper buttons + a large readable number.
+           They only sit side-by-side once there's real desktop width. */
         .set-input-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .set-input-full {
-            grid-column: 1 / -1;
+            width: 100%;
         }
 
         .set-input-group {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
+            min-width: 0;
         }
 
         .set-input-label {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-secondary);
             font-weight: 500;
         }
@@ -459,18 +575,19 @@
         .set-input-value {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 8px;
         }
 
         .set-input-value input {
             flex: 1;
-            padding: 10px;
+            min-width: 0;
+            padding: 12px 4px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 8px;
             color: var(--text-primary);
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             text-align: center;
             outline: none;
         }
@@ -481,10 +598,11 @@
         }
 
         .set-input-unit {
-            font-size: 13px;
+            font-size: 14px;
             color: var(--text-secondary);
-            font-weight: 500;
-            min-width: 30px;
+            font-weight: 600;
+            min-width: 26px;
+            flex-shrink: 0;
         }
 
         .set-complete-btn {
@@ -513,16 +631,17 @@
             100% { transform: scale(1); }
         }
 
-        /* Stepper buttons for fast numeric entry */
+        /* Stepper buttons for fast numeric entry — sized to a comfortable
+           thumb tap target since this is used almost exclusively on phones. */
         .stepper-btn {
-            width: 34px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             flex-shrink: 0;
             border: 1px solid var(--border);
             background: var(--bg-tertiary);
             color: var(--text-primary);
-            border-radius: 6px;
-            font-size: 18px;
+            border-radius: 8px;
+            font-size: 20px;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -596,6 +715,7 @@
             display: flex;
             justify-content: space-between;
             align-items: baseline;
+            gap: 12px;
             padding: 14px 0;
             border-bottom: 1px solid var(--border);
         }
@@ -604,10 +724,189 @@
             border-bottom: none;
         }
 
+        .stat-row > span:first-child {
+            flex: 1;
+            min-width: 0;
+        }
+
         .stat-value {
             font-size: 20px;
             font-weight: 700;
             font-feature-settings: "tnum";
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        /* Progress screen */
+        .segmented-control {
+            display: flex;
+            gap: 6px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .segmented-btn {
+            flex: 1;
+            min-width: 0;
+            padding: 9px 4px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .segmented-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .chart-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            height: 240px;
+        }
+
+        .suggestion-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: rgba(0, 217, 255, 0.08);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 8px;
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--accent);
+        }
+
+        /* Day-of-week picker (7 square pills, sized to fit any phone width) */
+        .day-picker {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .day-pill {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .day-pill.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .day-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* Calendar */
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .calendar-nav-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .calendar-day-label {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            padding-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .calendar-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .calendar-cell.empty {
+            background: transparent;
+            border-color: transparent;
+            cursor: default;
+        }
+
+        .calendar-cell.today {
+            border-color: var(--accent);
+        }
+
+        .calendar-cell.has-session {
+            background: rgba(0, 217, 255, 0.08);
+        }
+
+        .calendar-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            flex-shrink: 0;
+        }
+
+        .calendar-dot.scheduled-only {
+            background: transparent;
+            border: 1.5px solid var(--text-tertiary);
+        }
+
+        .resume-card-glow {
+            animation: glowPulse 2.4s ease-in-out infinite;
         }
 
         /* Modal */
@@ -656,8 +955,8 @@
         }
 
         .modal-close-btn {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: var(--bg-tertiary);
             border: none;
@@ -667,6 +966,50 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        /* In-app confirm dialog — replaces window.confirm() so destructive
+           and blocking prompts stay inside the app's own dark UI instead of
+           breaking out to a native OS alert. Centered, rounded on every
+           corner (unlike the bottom-sheet .modal-content), sized like a
+           compact alert rather than a full sheet. */
+        .confirm-overlay {
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .confirm-modal-content {
+            width: 100%;
+            max-width: 340px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 24px 20px;
+            text-align: center;
+            animation: slideUp 200ms ease;
+        }
+
+        .confirm-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .confirm-icon.danger {
+            background: rgba(255, 51, 102, 0.1);
+            color: var(--danger);
+        }
+
+        .confirm-message {
+            color: var(--text-secondary);
+            margin-bottom: 22px;
+            white-space: pre-line;
         }
 
         /* Responsive */
@@ -689,7 +1032,11 @@
             }
 
             .set-input-row {
-                grid-template-columns: 1fr 1fr 1fr;
+                flex-direction: row;
+            }
+
+            .set-input-row .set-input-group {
+                flex: 1;
             }
         }
 
@@ -755,6 +1102,227 @@
             return Date.now().toString(36) + Math.random().toString(36).slice(2);
         }
 
+        // Days follow JS's native Date.getDay() convention: 0 = Sunday.
+        const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+        const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        // A small, muted palette (distinct from the primary cyan accent used
+        // for actions everywhere) so different plans get a visual identity
+        // without needing a color picker UI. Deterministic per plan id.
+        const PLAN_COLORS = ['#00d9ff', '#a78bfa', '#34d399', '#fb923c', '#f472b6', '#60a5fa'];
+
+        function getPlanColor(planId) {
+            if (!planId) return PLAN_COLORS[0];
+            let hash = 0;
+            for (let i = 0; i < planId.length; i++) {
+                hash = (hash * 31 + planId.charCodeAt(i)) >>> 0;
+            }
+            return PLAN_COLORS[hash % PLAN_COLORS.length];
+        }
+
+        // Small line-style icon set (SF Symbols-inspired) used inside
+        // .icon-btn controls, keeping list-item actions compact instead of
+        // relying on text labels or emoji glyphs.
+        function IconChevronUp({ size = 16 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 15l-6-6-6 6" />
+                </svg>
+            );
+        }
+
+        function IconChevronDown({ size = 16 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 9l6 6 6-6" />
+                </svg>
+            );
+        }
+
+        function IconPencil({ size = 16 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+            );
+        }
+
+        function IconTrash({ size = 16 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                </svg>
+            );
+        }
+
+        function IconCopy({ size = 16 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="12" height="12" rx="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+            );
+        }
+
+        function IconChevronLeft({ size = 18 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            );
+        }
+
+        // Bottom-nav icons. Kept as line-style SVGs (not emoji) so the tab
+        // bar — the one piece of UI visible on every single screen — uses
+        // the same icon language as the rest of the app instead of mixing
+        // platform emoji glyphs with custom icons.
+        function IconHome({ size = 23 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 11.5L12 4l9 7.5" />
+                    <path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9" />
+                </svg>
+            );
+        }
+
+        function IconChartLine({ size = 23 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19V5" />
+                    <path d="M4 19h16" />
+                    <path d="M7.5 15.5l3.5-4 3 2.5 4.5-6" />
+                </svg>
+            );
+        }
+
+        function IconClipboardList({ size = 23 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="5" y="4" width="14" height="17" rx="2" />
+                    <path d="M9 3.5h6a1 1 0 0 1 1 1V6H8V4.5a1 1 0 0 1 1-1z" />
+                    <path d="M8.5 11h7" />
+                    <path d="M8.5 14.5h7" />
+                    <path d="M8.5 18h4.5" />
+                </svg>
+            );
+        }
+
+        function IconTimer({ size = 23 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="13" r="8" />
+                    <path d="M12 9v4l3 2" />
+                    <path d="M9.5 2.5h5" />
+                    <path d="M19 5l1.5-1.5" />
+                </svg>
+            );
+        }
+
+        // Standard top-of-screen back control. Always left-pinned and
+        // content-sized (see .back-btn), regardless of whether its parent
+        // happens to be a flex column.
+        function BackButton({ onClick, label = 'Back' }) {
+            return (
+                <button className="back-btn" onClick={onClick}>
+                    <IconChevronLeft size={17} />
+                    {label}
+                </button>
+            );
+        }
+
+        function IconAlertCircle({ size = 22 }) {
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7.5v5.5" />
+                    <path d="M12 16.2h.01" />
+                </svg>
+            );
+        }
+
+        // Single global confirm dialog, rendered once at the App root and
+        // driven by confirmDialog.request(). Any screen can
+        // `await confirmDialog.request({...})` instead of window.confirm().
+        function GlobalConfirmModal() {
+            const pending = useConfirmDialog();
+            if (!pending) return null;
+
+            return (
+                <div className="modal-overlay confirm-overlay">
+                    <div className="modal-content confirm-modal-content">
+                        <div className={`confirm-icon ${pending.danger ? 'danger' : ''}`}>
+                            {pending.danger ? <IconTrash size={22} /> : <IconAlertCircle size={22} />}
+                        </div>
+                        <div className="text-h4" style={{ marginBottom: '8px' }}>{pending.title}</div>
+                        <div className="text-body confirm-message">{pending.message}</div>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button className="btn btn-secondary btn-block" onClick={() => confirmDialog.resolve(false)}>
+                                {pending.cancelLabel}
+                            </button>
+                            <button
+                                className={`btn ${pending.danger ? 'btn-danger' : 'btn-primary'} btn-block`}
+                                onClick={() => confirmDialog.resolve(true)}
+                            >
+                                {pending.confirmLabel}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Finds every workout across all plans scheduled for today's weekday.
+        function formatScheduledDays(days) {
+            if (!days || days.length === 0) return null;
+            return [...days].sort().map(d => WEEKDAY_SHORT[d]).join(', ');
+        }
+
+        function getTodaysScheduledWorkouts(plans, sessions = []) {
+            const todayIndex = new Date().getDay();
+            const now = new Date();
+            const doneWorkoutIdsToday = new Set(
+                sessions
+                    .filter(s => {
+                        const d = new Date(s.completedAt);
+                        return d.getFullYear() === now.getFullYear() &&
+                            d.getMonth() === now.getMonth() &&
+                            d.getDate() === now.getDate();
+                    })
+                    .map(s => s.workoutId)
+            );
+            const matches = [];
+            plans.forEach(plan => {
+                plan.workouts.forEach(workout => {
+                    if ((workout.scheduledDays || []).includes(todayIndex) && !doneWorkoutIdsToday.has(workout.id)) {
+                        matches.push({ planId: plan.id, planName: plan.name, workout });
+                    }
+                });
+            });
+            return matches;
+        }
+
+        function DayOfWeekPicker({ selectedDays, onToggle }) {
+            return (
+                <div className="day-picker">
+                    {WEEKDAY_LETTERS.map((letter, day) => (
+                        <button
+                            key={day}
+                            className={`day-pill ${selectedDays.includes(day) ? 'selected' : ''}`}
+                            onClick={() => onToggle(day)}
+                            title={WEEKDAY_SHORT[day]}
+                        >
+                            {letter}
+                        </button>
+                    ))}
+                </div>
+            );
+        }
+
         // Returns the adjacent exercise sharing the same supersetId, if any.
         // Supersets are only ever formed between immediate neighbors, so this
         // is enough to find a pairing without needing a full grouping pass.
@@ -768,11 +1336,33 @@
             return null;
         }
 
-        // Silently downloads a timestamped JSON snapshot of all app data.
-        // Used both by the manual "Export backup" button and by automatic
-        // backups triggered after meaningful changes (plan/workout/exercise
-        // edits, finishing a workout). No file-system permission prompt is
-        // needed since this just uses a normal browser download.
+        // Simple progression suggestion: looks at the most recent past
+        // session that included this weighted exercise. If every completed
+        // set hit (or beat) the target reps, suggest a small bump; otherwise
+        // suggest repeating the same weight. Deliberately simple — no
+        // plateau detection, no deload logic.
+        function getSuggestedWeight(pastSessions, exerciseName, targetReps) {
+            const sorted = [...pastSessions].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+            for (const s of sorted) {
+                const ex = s.exercises.find(e => e.name === exerciseName && e.type === 'weighted');
+                if (!ex) continue;
+                const completed = ex.completedSets.filter(set => set.completed && set.weight != null && set.reps != null);
+                if (completed.length === 0) continue;
+
+                const maxWeight = Math.max(...completed.map(set => set.weight));
+                const allMetTarget = completed.every(set => set.reps >= (targetReps || 0));
+
+                if (allMetTarget) {
+                    const bumped = Math.round((maxWeight + 2.5) * 2) / 2;
+                    return { weight: bumped, reason: 'You hit your reps last time — try a little more.' };
+                }
+                return { weight: maxWeight, reason: 'Repeat this weight and aim for your target reps.' };
+            }
+            return null;
+        }
+
+        // Downloads a timestamped JSON snapshot of all app data. Triggered
+        // manually via the "Export backup" button on the Home screen.
         function downloadBackupFile() {
             try {
                 const json = store.exportData();
@@ -939,8 +1529,13 @@
 
                 const index = plan.workouts.findIndex(w => w.id === workoutId);
                 const copy = {
+                    ...workout,
                     id: generateId(),
                     name: `${workout.name} (Copy)`,
+                    // Deliberately unscheduled — otherwise the copy would
+                    // immediately fire alongside the original on the same
+                    // weekday(s) until the user notices and edits it.
+                    scheduledDays: [],
                     exercises: workout.exercises.map(ex => ({
                         ...ex,
                         id: generateId()
@@ -1162,26 +1757,31 @@
                 return session;
             }
 
-            resumeSession() {
-                if (this.data.currentSession) {
-                    this.data.currentSession.inProgress = true;
-                    this.notify();
-                }
-            }
-
+            // Discards the in-progress workout entirely without saving it
+            // to history — for when a workout was started by mistake or the
+            // user just doesn't want to finish it at all (distinct from
+            // "Pause & Resume Later", which keeps it around as-is).
             abandonSession() {
                 this.data.currentSession = null;
                 this.notify();
             }
 
             getSessions() {
-                return this.data.sessions.sort((a, b) =>
+                return [...this.data.sessions].sort((a, b) =>
                     new Date(b.completedAt) - new Date(a.completedAt)
                 );
             }
 
             getSession(id) {
                 return this.data.sessions.find(s => s.id === id);
+            }
+
+            deleteSession(id) {
+                const index = this.data.sessions.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    this.data.sessions.splice(index, 1);
+                    this.notify();
+                }
             }
 
             // Backup / restore
@@ -1199,7 +1799,29 @@
                     sessions: parsed.sessions,
                     currentSession: parsed.currentSession || null
                 };
+                this.normalizeData();
                 this.notify();
+            }
+
+            // Defensive shape repair. Guards against a corrupted/partial
+            // localStorage value (e.g. a failed write, or a hand-edited
+            // backup file) crashing the whole app on startup — every screen
+            // assumes plans/workouts/exercises/sessions are always arrays.
+            normalizeData() {
+                if (!this.data || typeof this.data !== 'object') {
+                    this.data = { plans: [], sessions: [], currentSession: null };
+                    return;
+                }
+                if (!Array.isArray(this.data.plans)) this.data.plans = [];
+                if (!Array.isArray(this.data.sessions)) this.data.sessions = [];
+                if (this.data.currentSession === undefined) this.data.currentSession = null;
+
+                this.data.plans.forEach(plan => {
+                    if (!Array.isArray(plan.workouts)) plan.workouts = [];
+                    plan.workouts.forEach(workout => {
+                        if (!Array.isArray(workout.exercises)) workout.exercises = [];
+                    });
+                });
             }
 
             // Persistence
@@ -1220,10 +1842,59 @@
                 } catch (e) {
                     console.error('Failed to load from storage:', e);
                 }
+                this.normalizeData();
             }
         }
 
         const store = new WorkoutStore();
+
+        // Same subscribe/notify pattern as WorkoutStore, but for a single
+        // pending confirm request instead of app data. Lets any handler
+        // anywhere `await confirmDialog.request({...})` instead of calling
+        // the native window.confirm(), which breaks out of the app's own
+        // dark UI with a plain OS dialog.
+        class ConfirmDialogController {
+            constructor() {
+                this.listeners = [];
+                this.pending = null;
+            }
+
+            subscribe(listener) {
+                this.listeners.push(listener);
+                return () => {
+                    this.listeners = this.listeners.filter(l => l !== listener);
+                };
+            }
+
+            notify() {
+                this.listeners.forEach(l => l());
+            }
+
+            request({ title = 'Are you sure?', message = '', confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false }) {
+                // Guard against a second request landing before the first
+                // resolves (e.g. a fast double-tap firing two confirms back
+                // to back) — without this, the new one would silently
+                // overwrite `pending` and the first caller's promise would
+                // never resolve, leaving that `await` hanging forever.
+                if (this.pending) {
+                    this.resolve(false);
+                }
+                return new Promise(resolve => {
+                    this.pending = { title, message, confirmLabel, cancelLabel, danger, resolve };
+                    this.notify();
+                });
+            }
+
+            resolve(value) {
+                if (!this.pending) return;
+                const { resolve: resolveFn } = this.pending;
+                this.pending = null;
+                this.notify();
+                resolveFn(value);
+            }
+        }
+
+        const confirmDialog = new ConfirmDialogController();
 
         // ==================== Hooks ====================
 
@@ -1238,6 +1909,19 @@
             }, []);
 
             return state;
+        }
+
+        function useConfirmDialog() {
+            const [pending, setPending] = useState(confirmDialog.pending);
+
+            useEffect(() => {
+                const unsubscribe = confirmDialog.subscribe(() => {
+                    setPending(confirmDialog.pending);
+                });
+                return unsubscribe;
+            }, []);
+
+            return pending;
         }
 
         function useNavigation() {
@@ -1262,8 +1946,68 @@
             };
 
             const handleResumeWorkout = () => {
-                onNavigate('workout', { resuming: true });
+                onNavigate('workout');
             };
+
+            const handleStartTodaysWorkout = async (planId, workoutId) => {
+                if (currentSession) {
+                    const proceed = await confirmDialog.request({
+                        title: 'Unfinished workout',
+                        message: `You have an unfinished workout ("${currentSession.workoutName}"). Starting a new one will discard it.`,
+                        confirmLabel: 'Discard & Start',
+                        danger: true
+                    });
+                    if (!proceed) return;
+                }
+                store.startWorkout(planId, workoutId);
+                onNavigate('workout');
+            };
+
+            const todaysWorkouts = getTodaysScheduledWorkouts(plans, state.sessions);
+
+            const weekStats = (() => {
+                const now = new Date();
+                const day = (now.getDay() + 6) % 7; // 0 = Monday
+                const monday = new Date(now);
+                monday.setDate(now.getDate() - day);
+                monday.setHours(0, 0, 0, 0);
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 7);
+
+                const doneThisWeek = state.sessions.filter(s => {
+                    const d = new Date(s.completedAt);
+                    return d >= monday && d < sunday;
+                }).length;
+
+                const scheduledThisWeek = plans.reduce(
+                    (sum, plan) => sum + plan.workouts.reduce((s, w) => s + (w.scheduledDays?.length || 0), 0),
+                    0
+                );
+
+                return { doneThisWeek, scheduledThisWeek };
+            })();
+
+            // Consecutive-day streak, gamification-style. Doesn't break just
+            // because today hasn't been logged yet — only counts today as a
+            // gap once the day is actually over (i.e. once "yesterday" too
+            // has no session).
+            const currentStreak = (() => {
+                const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                const loggedDays = new Set(state.sessions.map(s => dayKey(new Date(s.completedAt))));
+
+                const cursor = new Date();
+                cursor.setHours(0, 0, 0, 0);
+                if (!loggedDays.has(dayKey(cursor))) {
+                    cursor.setDate(cursor.getDate() - 1);
+                }
+
+                let streak = 0;
+                while (loggedDays.has(dayKey(cursor))) {
+                    streak += 1;
+                    cursor.setDate(cursor.getDate() - 1);
+                }
+                return streak;
+            })();
 
             const handleExport = () => {
                 downloadBackupFile();
@@ -1278,11 +2022,15 @@
                 if (!file) return;
 
                 const reader = new FileReader();
-                reader.onload = () => {
+                reader.onload = async () => {
+                    const proceed = await confirmDialog.request({
+                        title: 'Replace current data?',
+                        message: 'Importing will replace all current data with this backup.',
+                        confirmLabel: 'Import',
+                        danger: true
+                    });
+                    if (!proceed) return;
                     try {
-                        if (!window.confirm('Importing will replace all current data with this backup. Continue?')) {
-                            return;
-                        }
                         store.importData(reader.result);
                         setImportMessage({ type: 'success', text: 'Backup restored successfully.' });
                     } catch (err) {
@@ -1303,13 +2051,23 @@
             return (
                 <div className="screen active home-screen">
                     <div style={{ paddingTop: '16px' }}>
-                        <div className="greeting">
-                            {greeting}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                            <div className="greeting">
+                                {greeting}
+                            </div>
+                            {currentStreak > 0 && (
+                                <div
+                                    className="text-caption"
+                                    style={{ color: 'var(--warning)', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}
+                                >
+                                    🔥 {currentStreak}-day streak
+                                </div>
+                            )}
                         </div>
 
                         {currentSession && (
                             <div
-                                className="card card-hover mt-md"
+                                className="card card-hover resume-card-glow mt-md"
                                 style={{ cursor: 'pointer' }}
                                 onClick={handleResumeWorkout}
                             >
@@ -1323,7 +2081,32 @@
                             </div>
                         )}
 
-                        <div style={{ marginTop: currentSession ? '24px' : '16px', marginBottom: '12px' }}>
+                        {!currentSession && todaysWorkouts.length > 0 && (
+                            <div className="mt-md">
+                                {todaysWorkouts.map(({ planId, planName, workout }) => (
+                                    <div
+                                        key={workout.id}
+                                        className="card card-hover resume-card-glow"
+                                        style={{ cursor: 'pointer', borderLeft: `3px solid ${getPlanColor(planId)}`, marginBottom: '10px' }}
+                                        onClick={() => handleStartTodaysWorkout(planId, workout.id)}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                            <div className="text-h4">📅 Today: {workout.name}</div>
+                                            <span style={{ fontSize: '20px' }}>→</span>
+                                        </div>
+                                        <div className="text-caption">{planName}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {weekStats.scheduledThisWeek > 0 && (
+                            <div className="text-caption mt-md">
+                                {weekStats.doneThisWeek} of {weekStats.scheduledThisWeek} scheduled workouts done this week
+                            </div>
+                        )}
+
+                        <div style={{ marginTop: (currentSession || todaysWorkouts.length > 0) ? '24px' : '16px', marginBottom: '12px' }}>
                             <div className="text-h3">Your Plans</div>
                         </div>
 
@@ -1338,6 +2121,7 @@
                                     <div
                                         key={plan.id}
                                         className="plan-card card-hover"
+                                        style={{ borderLeft: `3px solid ${getPlanColor(plan.id)}` }}
                                         onClick={() => handleSelectPlan(plan.id)}
                                     >
                                         <div className="plan-card-header">
@@ -1402,29 +2186,38 @@
                 return <div className="screen active" style={{ padding: '20px' }}>Plan not found</div>;
             }
 
-            const handleStartWorkout = (workoutId) => {
+            const handleStartWorkout = async (workoutId) => {
                 const existing = state.currentSession;
-                if (existing && existing.inProgress) {
-                    const proceed = window.confirm(
-                        `You have an unfinished workout ("${existing.workoutName}"). Starting a new one will discard it. Continue?`
-                    );
+                if (existing) {
+                    const proceed = await confirmDialog.request({
+                        title: 'Unfinished workout',
+                        message: `You have an unfinished workout ("${existing.workoutName}"). Starting a new one will discard it.`,
+                        confirmLabel: 'Discard & Start',
+                        danger: true
+                    });
                     if (!proceed) return;
                 }
                 store.startWorkout(planId, workoutId);
-                downloadBackupFile();
                 onNavigate('workout');
             };
 
             const handleDuplicateWorkout = (workoutId) => {
                 store.duplicateWorkout(planId, workoutId);
-                downloadBackupFile();
             };
 
-            const handleMarkDone = (workoutId, workoutName) => {
-                if (window.confirm(`Log "${workoutName}" as done today? This won't record individual sets.`)) {
+            const handleMarkDone = async (workoutId, workoutName) => {
+                const proceed = await confirmDialog.request({
+                    title: 'Log as done?',
+                    message: `Log "${workoutName}" as done today? This won't record individual sets.`,
+                    confirmLabel: 'Log as Done'
+                });
+                if (proceed) {
                     const session = store.logWorkoutDone(planId, workoutId);
-                    downloadBackupFile();
-                    onNavigate('session-detail', { sessionId: session?.id });
+                    onNavigate('session-detail', {
+                        sessionId: session?.id,
+                        returnTo: 'plan-details',
+                        returnParams: { planId }
+                    });
                 }
             };
 
@@ -1435,12 +2228,7 @@
             return (
                 <div className="screen active" style={{ padding: '16px' }}>
                     <div style={{ marginBottom: '16px' }}>
-                        <button
-                            onClick={() => onNavigate('home')}
-                            style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '16px', marginBottom: '12px', cursor: 'pointer' }}
-                        >
-                            ← Back
-                        </button>
+                        <BackButton onClick={() => onNavigate('home')} />
                         <div className="text-h2">{plan.name}</div>
                     </div>
 
@@ -1456,30 +2244,32 @@
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                                         <div className="text-h4">{workout.name}</div>
                                     </div>
-                                    <div className="text-caption" style={{ marginBottom: '12px' }}>
+                                    <div className="text-caption" style={{ marginBottom: '4px' }}>
                                         {workout.exercises.length === 0 ? 'No exercises' : `${workout.exercises.length} exercises`}
                                     </div>
-                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {formatScheduledDays(workout.scheduledDays) && (
+                                        <div className="day-badge" style={{ marginBottom: '12px' }}>
+                                            📅 {formatScheduledDays(workout.scheduledDays)}
+                                        </div>
+                                    )}
+                                    <button
+                                        className="btn btn-primary btn-block"
+                                        onClick={() => handleStartWorkout(workout.id)}
+                                    >
+                                        Start Workout
+                                    </button>
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                                         <button
-                                            className="btn btn-primary btn-block"
-                                            onClick={() => handleStartWorkout(workout.id)}
-                                            style={{ flex: '2 1 140px' }}
-                                        >
-                                            Start Workout
-                                        </button>
-                                        <button
-                                            className="btn btn-secondary btn-sm"
+                                            className="btn btn-outline-accent btn-sm btn-block"
                                             onClick={() => handleMarkDone(workout.id, workout.name)}
                                             title="Log as done without tracking sets"
-                                            style={{ flex: '1 1 80px' }}
                                         >
                                             ✓ Done
                                         </button>
                                         <button
-                                            className="btn btn-secondary btn-sm"
+                                            className="btn btn-secondary btn-sm btn-block"
                                             onClick={() => handleDuplicateWorkout(workout.id)}
                                             title="Duplicate this workout"
-                                            style={{ flex: '1 1 80px' }}
                                         >
                                             ⧉ Duplicate
                                         </button>
@@ -1489,8 +2279,8 @@
                         </div>
                     )}
 
-                    <button className="btn btn-secondary btn-block mt-lg" onClick={handleEditPlan} style={{ marginBottom: '80px' }}>
-                        Edit Plan
+                    <button className="btn btn-outline-accent btn-block mt-lg" onClick={handleEditPlan} style={{ marginBottom: '80px' }}>
+                        <IconPencil size={15} /> Edit Plan
                     </button>
                 </div>
             );
@@ -1518,7 +2308,7 @@
             return elapsed;
         }
 
-        function WorkoutSessionScreen({ onNavigate, state, resuming }) {
+        function WorkoutSessionScreen({ onNavigate, state }) {
             const session = state.currentSession;
             const elapsed = useElapsedTime(session?.startedAt || Date.now());
 
@@ -1544,16 +2334,24 @@
                 (sum, ex) => sum + ex.completedSets.filter(s => s.completed).length,
                 0
             );
-            const allSetsCompleted = totalSets > 0 && completedCount === totalSets;
+            // A workout with no exercises (e.g. Yoga) has totalSets === 0,
+            // which should count as "nothing left to complete" rather than
+            // "nothing was completed" — otherwise finishing it always shows
+            // the "some sets aren't marked complete" warning by mistake.
+            const allSetsCompleted = totalSets === 0 || completedCount === totalSets;
             const progressPercent = totalSets > 0 ? Math.round((completedCount / totalSets) * 100) : 0;
 
-            const handleFinishWorkout = () => {
+            const handleFinishWorkout = async () => {
                 const message = allSetsCompleted
-                    ? 'Finish this workout? Your data will be saved to history.'
-                    : 'Some sets are not marked complete. Finish anyway? Unrecorded sets will be saved as skipped.';
-                if (window.confirm(message)) {
+                    ? 'Your data will be saved to history.'
+                    : 'Some sets are not marked complete. Unrecorded sets will be saved as skipped.';
+                const proceed = await confirmDialog.request({
+                    title: 'Finish this workout?',
+                    message,
+                    confirmLabel: 'Finish Workout'
+                });
+                if (proceed) {
                     const finished = store.completeSession();
-                    downloadBackupFile();
                     onNavigate('workout-complete', { sessionId: finished?.id });
                 }
             };
@@ -1562,17 +2360,30 @@
                 onNavigate('home');
             };
 
+            const handleDiscardWorkout = async () => {
+                const proceed = await confirmDialog.request({
+                    title: 'Discard this workout?',
+                    message: 'Nothing you\'ve logged in this session will be saved. This cannot be undone.',
+                    confirmLabel: 'Discard',
+                    danger: true
+                });
+                if (proceed) {
+                    store.abandonSession();
+                    onNavigate('home');
+                }
+            };
+
             return (
                 <div className="screen active" style={{ padding: '16px', paddingBottom: '140px' }}>
-                    <div style={{ marginBottom: '16px', position: 'sticky', top: '0', background: 'var(--bg-primary)', paddingTop: '8px', paddingBottom: '8px', zIndex: '50' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    <div style={{ marginBottom: '16px', position: 'sticky', top: '0', background: 'rgba(10, 10, 10, 0.82)', backdropFilter: 'blur(10px)', paddingTop: '8px', paddingBottom: '8px', zIndex: '50', marginLeft: '-16px', marginRight: '-16px', paddingLeft: '16px', paddingRight: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {session.planName} — {session.workoutName}
                                 </div>
                                 <div className="text-h3" style={{ marginTop: '4px' }}>Workout</div>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
+                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
                                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Elapsed</div>
                                 <div style={{ fontSize: '20px', fontWeight: 700, fontFeatureSettings: '"tnum"' }}>{elapsed}</div>
                             </div>
@@ -1594,6 +2405,7 @@
                                 allExercises={session.exercises}
                                 exerciseIndex={exIndex}
                                 onCompleteSet={handleCompleteSet}
+                                pastSessions={state.sessions}
                             />
                         ))}
                     </div>
@@ -1608,12 +2420,19 @@
                         <button className="btn btn-secondary btn-block" onClick={handlePauseWorkout}>
                             Pause & Resume Later
                         </button>
+                        <button
+                            onClick={handleDiscardWorkout}
+                            className="text-caption"
+                            style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '4px', alignSelf: 'center' }}
+                        >
+                            Discard Workout
+                        </button>
                     </div>
                 </div>
             );
         }
 
-        function ExerciseSetRecorder({ exercise, allExercises, exerciseIndex, onCompleteSet }) {
+        function ExerciseSetRecorder({ exercise, allExercises, exerciseIndex, onCompleteSet, pastSessions }) {
             const targetText = (() => {
                 if (exercise.type === 'weighted') {
                     return `Target: ${exercise.sets} × ${exercise.reps} @ ${exercise.weight}kg`;
@@ -1625,6 +2444,11 @@
             })();
 
             const partner = allExercises ? getSupersetPartner(allExercises, exercise) : null;
+
+            const anyCompleted = exercise.completedSets.some(s => s.completed);
+            const suggestion = (!anyCompleted && exercise.type === 'weighted' && pastSessions)
+                ? getSuggestedWeight(pastSessions, exercise.name, exercise.reps)
+                : null;
 
             return (
                 <div style={exercise.supersetId ? { borderLeft: '3px solid var(--accent)', paddingLeft: '10px' } : undefined}>
@@ -1643,6 +2467,12 @@
                                 <div key={i} className={`set-dot ${set.completed ? 'filled' : ''}`}></div>
                             ))}
                         </div>
+                        {suggestion && (
+                            <div className="suggestion-banner">
+                                <span style={{ flexShrink: 0 }}>💡</span>
+                                <span style={{ flex: 1, minWidth: 0 }}>Suggested: {suggestion.weight}kg — {suggestion.reason}</span>
+                            </div>
+                        )}
                     </div>
 
                     {exercise.completedSets.map((set, setIndex) => (
@@ -1773,7 +2603,168 @@
             );
         }
 
+        // Month-grid calendar for History. Filled dots mark days with a
+        // completed session; outline dots mark days that match a workout's
+        // recurring weekday schedule but weren't logged. Tapping a day with
+        // a session opens the most recent one from that day.
+        function CalendarView({ sessions, plans, onSelectSession }) {
+            const [monthDate, setMonthDate] = useState(() => {
+                const now = new Date();
+                now.setDate(1);
+                now.setHours(0, 0, 0, 0);
+
+                // If nothing's logged in the current month, jump straight to
+                // whichever month has your most recent workout instead of
+                // opening on an empty grid — otherwise the calendar looks
+                // broken/empty the first time you check it after a quiet month.
+                const loggedThisMonth = sessions.some(s => {
+                    const d = new Date(s.completedAt);
+                    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+                });
+                if (sessions.length === 0 || loggedThisMonth) return now;
+
+                const mostRecent = [...sessions].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))[0];
+                const target = new Date(mostRecent.completedAt);
+                target.setDate(1);
+                target.setHours(0, 0, 0, 0);
+                return target;
+            });
+
+            const scheduledWeekdays = useMemo(() => {
+                const days = new Set();
+                plans.forEach(plan => plan.workouts.forEach(w => (w.scheduledDays || []).forEach(d => days.add(d))));
+                return days;
+            }, [plans]);
+
+            const sessionsByDay = useMemo(() => {
+                const map = new Map();
+                sessions.forEach(s => {
+                    const d = new Date(s.completedAt);
+                    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                    if (!map.has(key)) map.set(key, []);
+                    map.get(key).push(s);
+                });
+                return map;
+            }, [sessions]);
+
+            const year = monthDate.getFullYear();
+            const month = monthDate.getMonth();
+            const firstWeekday = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            const cells = [];
+            for (let i = 0; i < firstWeekday; i++) cells.push(null);
+            for (let day = 1; day <= daysInMonth; day++) cells.push(day);
+
+            const monthLabel = monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+            const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+            const monthHasAnyMarker = cells.some(day => {
+                if (day === null) return false;
+                const key = `${year}-${month}-${day}`;
+                if (sessionsByDay.has(key)) return true;
+                const weekday = new Date(year, month, day).getDay();
+                return scheduledWeekdays.has(weekday);
+            });
+
+            const handleDayClick = (day) => {
+                const key = `${year}-${month}-${day}`;
+                const daySessions = sessionsByDay.get(key);
+                if (daySessions && daySessions.length > 0) {
+                    const mostRecent = [...daySessions].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))[0];
+                    onSelectSession(mostRecent.id);
+                }
+            };
+
+            return (
+                <div>
+                    <div className="calendar-nav">
+                        <button
+                            className="calendar-nav-btn"
+                            onClick={() => setMonthDate(new Date(year, month - 1, 1))}
+                            aria-label="Previous month"
+                        >
+                            ‹
+                        </button>
+                        <div style={{ textAlign: 'center' }}>
+                            <div className="text-h4">{monthLabel}</div>
+                            {!isCurrentMonth && (
+                                <button
+                                    onClick={() => {
+                                        const now = new Date();
+                                        now.setDate(1);
+                                        now.setHours(0, 0, 0, 0);
+                                        setMonthDate(now);
+                                    }}
+                                    style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer', padding: '2px 0' }}
+                                >
+                                    Jump to Today
+                                </button>
+                            )}
+                        </div>
+                        <button
+                            className="calendar-nav-btn"
+                            onClick={() => setMonthDate(new Date(year, month + 1, 1))}
+                            aria-label="Next month"
+                        >
+                            ›
+                        </button>
+                    </div>
+                    <div className="calendar-grid">
+                        {WEEKDAY_LETTERS.map((letter, i) => (
+                            <div key={i} className="calendar-day-label">{letter}</div>
+                        ))}
+                        {cells.map((day, idx) => {
+                            if (day === null) {
+                                return <div key={idx} className="calendar-cell empty"></div>;
+                            }
+                            const key = `${year}-${month}-${day}`;
+                            const daySessions = sessionsByDay.get(key);
+                            const hasSession = !!(daySessions && daySessions.length > 0);
+                            const weekday = new Date(year, month, day).getDay();
+                            const isScheduled = scheduledWeekdays.has(weekday);
+                            const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+                            return (
+                                <div
+                                    key={idx}
+                                    className={`calendar-cell ${isToday ? 'today' : ''} ${hasSession ? 'has-session' : ''}`}
+                                    onClick={() => handleDayClick(day)}
+                                    style={{ cursor: hasSession ? 'pointer' : 'default' }}
+                                >
+                                    <div>{day}</div>
+                                    {hasSession ? (
+                                        <div className="calendar-dot"></div>
+                                    ) : isScheduled ? (
+                                        <div className="calendar-dot scheduled-only"></div>
+                                    ) : (
+                                        <div style={{ width: '8px', height: '8px' }}></div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px', marginTop: '14px' }}>
+                        <div className="text-caption" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div className="calendar-dot"></div> Completed
+                        </div>
+                        <div className="text-caption" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div className="calendar-dot scheduled-only"></div> Scheduled
+                        </div>
+                    </div>
+
+                    {!monthHasAnyMarker && (
+                        <div className="text-caption" style={{ marginTop: '14px', textAlign: 'center' }}>
+                            Nothing logged or scheduled for {monthDate.toLocaleDateString(undefined, { month: 'long' })} yet.
+                            {sessions.length === 0 && ' Finish a workout, or add scheduled days to a workout, and it\'ll show up here.'}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         function HistoryScreen({ onNavigate, state }) {
+            const [view, setView] = useState('list');
             const sessions = [...state.sessions].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
             const handleViewSession = (sessionId) => {
@@ -1784,7 +2775,28 @@
                 <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
                     <div className="text-h2" style={{ marginBottom: '16px' }}>History</div>
 
-                    {sessions.length === 0 ? (
+                    <div className="segmented-control">
+                        <button
+                            className={`segmented-btn ${view === 'list' ? 'active' : ''}`}
+                            onClick={() => setView('list')}
+                        >
+                            List
+                        </button>
+                        <button
+                            className={`segmented-btn ${view === 'calendar' ? 'active' : ''}`}
+                            onClick={() => setView('calendar')}
+                        >
+                            Calendar
+                        </button>
+                    </div>
+
+                    {view === 'calendar' ? (
+                        <CalendarView
+                            sessions={state.sessions}
+                            plans={state.plans}
+                            onSelectSession={handleViewSession}
+                        />
+                    ) : sessions.length === 0 ? (
                         <div className="empty-state">
                             <div className="empty-state-icon">📊</div>
                             <div className="empty-state-text">No completed workouts yet.</div>
@@ -1799,13 +2811,13 @@
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                        <div style={{ flex: 1 }}>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
                                             <div className="text-h4">{session.workoutName}</div>
                                             <div className="text-caption">
                                                 {session.planName}
                                             </div>
                                         </div>
-                                        <span style={{ fontSize: '20px' }}>→</span>
+                                        <span style={{ fontSize: '20px', flexShrink: 0 }}>→</span>
                                     </div>
                                     <div className="text-caption">
                                         {new Date(session.completedAt).toLocaleDateString(undefined, {
@@ -1822,21 +2834,371 @@
             );
         }
 
-        function SessionDetailScreen({ onNavigate, sessionId, state }) {
-            const session = state.sessions.find(s => s.id === sessionId);
+        function chartBaseOptions(extra = {}) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1a1a1a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#a0a0a0',
+                        borderColor: 'rgba(255,255,255,0.08)',
+                        borderWidth: 1,
+                        padding: 10
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#707070', font: { size: 10 }, maxRotation: 0, autoSkip: true }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#707070', font: { size: 10 } },
+                        beginAtZero: true
+                    }
+                },
+                ...extra
+            };
+        }
 
-            if (!session) {
-                return <div className="screen active" style={{ padding: '20px' }}>Session not found</div>;
+        // Generic hook: creates/destroys a Chart.js instance on a canvas as
+        // the underlying config changes. Config is passed as a factory so it
+        // isn't rebuilt unless the signature actually changes.
+        function useChart(canvasRef, buildConfig, signature) {
+            useEffect(() => {
+                if (!canvasRef.current || typeof Chart === 'undefined') return;
+                const chart = new Chart(canvasRef.current, buildConfig());
+                return () => chart.destroy();
+                // eslint-disable-next-line
+            }, [signature]);
+        }
+
+        function VolumeChart({ sessions }) {
+            const canvasRef = useRef(null);
+
+            const { labels, data, totalVolume } = useMemo(() => {
+                const labels = [];
+                const data = [];
+                sessions.forEach(s => {
+                    let vol = 0;
+                    s.exercises.forEach(ex => {
+                        if (ex.type !== 'weighted') return;
+                        ex.completedSets.forEach(set => {
+                            if (set.completed && set.weight != null && set.reps != null) {
+                                vol += set.weight * set.reps;
+                            }
+                        });
+                    });
+                    labels.push(new Date(s.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+                    data.push(Math.round(vol));
+                });
+                return { labels, data, totalVolume: data.reduce((a, b) => a + b, 0) };
+            }, [sessions]);
+
+            useChart(canvasRef, () => ({
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        backgroundColor: 'rgba(0,217,255,0.5)',
+                        borderColor: '#00d9ff',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        maxBarThickness: 28
+                    }]
+                },
+                options: chartBaseOptions()
+            }), labels.join(',') + data.join(','));
+
+            if (data.every(v => v === 0)) {
+                return (
+                    <div className="empty-state">
+                        <div className="empty-state-icon">📈</div>
+                        <div className="empty-state-text">No weighted-exercise data yet. Volume tracks total kg lifted per workout.</div>
+                    </div>
+                );
+            }
+
+            return (
+                <>
+                    <div className="chart-card">
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                    <div className="text-caption mt-md">
+                        Total volume across {sessions.length} workout{sessions.length === 1 ? '' : 's'}: {totalVolume.toLocaleString()} kg
+                    </div>
+                </>
+            );
+        }
+
+        function FrequencyChart({ sessions }) {
+            const canvasRef = useRef(null);
+
+            const { labels, data } = useMemo(() => {
+                // Keyed and labeled entirely from local date components — a
+                // toISOString() round-trip here would shift the bucket to
+                // the wrong day for anyone east of UTC.
+                const weekMap = new Map();
+                const mondayDates = new Map();
+                sessions.forEach(s => {
+                    const d = new Date(s.completedAt);
+                    const day = (d.getDay() + 6) % 7; // 0 = Monday
+                    const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - day);
+                    const key = `${monday.getFullYear()}-${monday.getMonth()}-${monday.getDate()}`;
+                    weekMap.set(key, (weekMap.get(key) || 0) + 1);
+                    if (!mondayDates.has(key)) mondayDates.set(key, monday);
+                });
+                const sortedKeys = Array.from(weekMap.keys()).sort((a, b) => mondayDates.get(a) - mondayDates.get(b));
+                const recentKeys = sortedKeys.slice(-10);
+                const labels = recentKeys.map(k => mondayDates.get(k).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+                const data = recentKeys.map(k => weekMap.get(k));
+                return { labels, data };
+            }, [sessions]);
+
+            useChart(canvasRef, () => ({
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        backgroundColor: 'rgba(0,217,255,0.5)',
+                        borderColor: '#00d9ff',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        maxBarThickness: 28
+                    }]
+                },
+                options: chartBaseOptions({
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#707070', font: { size: 10 }, maxRotation: 0 } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#707070', font: { size: 10 }, stepSize: 1, precision: 0 }, beginAtZero: true }
+                    }
+                })
+            }), labels.join(',') + data.join(','));
+
+            return (
+                <>
+                    <div className="chart-card">
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                    <div className="text-caption mt-md">Workouts completed per week (last {labels.length} weeks with activity)</div>
+                </>
+            );
+        }
+
+        function ExerciseProgressChart({ sessions, exerciseName }) {
+            const canvasRef = useRef(null);
+
+            const points = useMemo(() => {
+                const pts = [];
+                sessions.forEach(s => {
+                    const ex = s.exercises.find(e => e.name === exerciseName);
+                    if (!ex) return;
+                    let value = null;
+                    if (ex.type === 'weighted') {
+                        const vals = ex.completedSets.filter(set => set.completed && set.weight != null).map(set => set.weight);
+                        if (vals.length) value = Math.max(...vals);
+                    } else if (ex.type === 'bodyweight') {
+                        const vals = ex.completedSets.filter(set => set.completed && set.reps != null).map(set => set.reps);
+                        if (vals.length) value = Math.max(...vals);
+                    } else {
+                        const vals = ex.completedSets.filter(set => set.completed && set.duration != null).map(set => set.duration);
+                        if (vals.length) value = Math.max(...vals);
+                    }
+                    if (value != null) {
+                        pts.push({ date: s.completedAt, value, type: ex.type });
+                    }
+                });
+                return pts;
+            }, [sessions, exerciseName]);
+
+            const labels = points.map(p => new Date(p.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+            const data = points.map(p => p.value);
+            const unit = points[0] ? (points[0].type === 'weighted' ? 'kg' : points[0].type === 'time_based' ? 'sec' : 'reps') : '';
+
+            useChart(canvasRef, () => ({
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        borderColor: '#00d9ff',
+                        backgroundColor: 'rgba(0,217,255,0.15)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#00d9ff',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: chartBaseOptions()
+            }), exerciseName + labels.join(',') + data.join(','));
+
+            if (points.length === 0) {
+                return (
+                    <div className="empty-state">
+                        <div className="empty-state-icon">📈</div>
+                        <div className="empty-state-text">No history yet for this exercise.</div>
+                    </div>
+                );
+            }
+
+            const best = Math.max(...data);
+            const latest = data[data.length - 1];
+            const prev = data.length > 1 ? data[data.length - 2] : null;
+            const delta = prev != null ? Math.round((latest - prev) * 10) / 10 : null;
+
+            return (
+                <>
+                    <div className="chart-card" style={{ marginBottom: '16px' }}>
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                    <div className="card">
+                        <div className="stat-row">
+                            <span className="text-caption">Personal best</span>
+                            <span className="stat-value">{best} {unit}</span>
+                        </div>
+                        <div className="stat-row">
+                            <span className="text-caption">Most recent</span>
+                            <span className="stat-value">{latest} {unit}</span>
+                        </div>
+                        {delta != null && (
+                            <div className="stat-row">
+                                <span className="text-caption">Change vs previous</span>
+                                <span
+                                    className="stat-value"
+                                    style={{ color: delta > 0 ? 'var(--success)' : delta < 0 ? 'var(--danger)' : 'var(--text-secondary)' }}
+                                >
+                                    {delta > 0 ? '+' : ''}{delta} {unit}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </>
+            );
+        }
+
+        function ProgressScreen({ state }) {
+            const [view, setView] = useState('volume');
+            const [selectedExercise, setSelectedExercise] = useState('');
+
+            const sessions = useMemo(
+                () => [...state.sessions].sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt)),
+                [state.sessions]
+            );
+
+            const exerciseNames = useMemo(() => {
+                const names = new Set();
+                sessions.forEach(s => s.exercises.forEach(ex => names.add(ex.name)));
+                return Array.from(names).sort();
+            }, [sessions]);
+
+            useEffect(() => {
+                if (!selectedExercise && exerciseNames.length > 0) {
+                    setSelectedExercise(exerciseNames[0]);
+                }
+            }, [exerciseNames, selectedExercise]);
+
+            if (sessions.length === 0) {
+                return (
+                    <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
+                        <div className="text-h2" style={{ marginBottom: '16px' }}>Progress</div>
+                        <div className="empty-state">
+                            <div className="empty-state-icon">📈</div>
+                            <div className="empty-state-text">Finish a few workouts to see your progress here.</div>
+                        </div>
+                    </div>
+                );
             }
 
             return (
                 <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
-                    <button
-                        onClick={() => onNavigate('history')}
-                        style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '16px', marginBottom: '12px', cursor: 'pointer' }}
-                    >
-                        ← Back
-                    </button>
+                    <div className="text-h2" style={{ marginBottom: '16px' }}>Progress</div>
+
+                    <div className="segmented-control">
+                        <button
+                            className={`segmented-btn ${view === 'volume' ? 'active' : ''}`}
+                            onClick={() => setView('volume')}
+                        >
+                            Volume
+                        </button>
+                        <button
+                            className={`segmented-btn ${view === 'frequency' ? 'active' : ''}`}
+                            onClick={() => setView('frequency')}
+                        >
+                            Frequency
+                        </button>
+                        <button
+                            className={`segmented-btn ${view === 'exercise' ? 'active' : ''}`}
+                            onClick={() => setView('exercise')}
+                        >
+                            By Exercise
+                        </button>
+                    </div>
+
+                    {view === 'volume' && <VolumeChart sessions={sessions} />}
+                    {view === 'frequency' && <FrequencyChart sessions={sessions} />}
+                    {view === 'exercise' && (
+                        <>
+                            {exerciseNames.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-state-text">No exercises logged yet.</div>
+                                </div>
+                            ) : (
+                                <>
+                                    <select
+                                        className="input-field"
+                                        style={{ marginBottom: '16px' }}
+                                        value={selectedExercise}
+                                        onChange={(e) => setSelectedExercise(e.target.value)}
+                                    >
+                                        {exerciseNames.map(name => (
+                                            <option key={name} value={name}>{name}</option>
+                                        ))}
+                                    </select>
+                                    <ExerciseProgressChart sessions={sessions} exerciseName={selectedExercise} />
+                                </>
+                            )}
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        function SessionDetailScreen({ onNavigate, sessionId, state, returnTo, returnParams }) {
+            const session = state.sessions.find(s => s.id === sessionId);
+
+            if (!session) {
+                return (
+                    <div className="screen active" style={{ padding: '20px', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div className="text-body" style={{ marginBottom: '16px' }}>Session not found</div>
+                            <button className="btn btn-primary" onClick={() => onNavigate('home')}>Back to Home</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const handleDelete = async () => {
+                const proceed = await confirmDialog.request({
+                    title: 'Delete this workout?',
+                    message: 'This will remove it from your history. This cannot be undone.',
+                    confirmLabel: 'Delete',
+                    danger: true
+                });
+                if (proceed) {
+                    store.deleteSession(sessionId);
+                    onNavigate('history');
+                }
+            };
+
+            return (
+                <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
+                    <BackButton onClick={() => onNavigate(returnTo || 'history', returnParams || {})} />
 
                     <div style={{ marginBottom: '16px' }}>
                         <div className="text-h3">{session.workoutName}</div>
@@ -1882,6 +3244,13 @@
                             );
                         })}
                     </div>
+
+                    <button
+                        className="btn btn-danger btn-block mt-lg"
+                        onClick={handleDelete}
+                    >
+                        <IconTrash size={15} /> Delete This Workout
+                    </button>
                 </div>
             );
         }
@@ -1918,7 +3287,7 @@
             ));
 
             return (
-                <div className="screen active" style={{ padding: '16px', alignItems: 'center', paddingTop: '60px' }}>
+                <div className="screen active" style={{ padding: '16px', paddingBottom: '100px', alignItems: 'center', paddingTop: '60px' }}>
                     <div className="complete-checkmark">✓</div>
                     <div className="text-h2" style={{ marginTop: '20px', textAlign: 'center' }}>Workout Complete</div>
                     <div className="text-caption" style={{ marginTop: '4px', textAlign: 'center' }}>
@@ -1951,7 +3320,7 @@
                     </button>
                     <button
                         className="btn btn-secondary btn-block mt-md"
-                        onClick={() => onNavigate('session-detail', { sessionId })}
+                        onClick={() => onNavigate('session-detail', { sessionId, returnTo: 'workout-complete', returnParams: { sessionId } })}
                         style={{ width: '100%' }}
                     >
                         View Details
@@ -1966,19 +3335,38 @@
             const [workouts, setWorkouts] = useState([]);
             const [currentWorkout, setCurrentWorkout] = useState({ name: '', exercises: [] });
             const [currentExercise, setCurrentExercise] = useState(null);
+            const [creating, setCreating] = useState(false);
+
+            // Closing loses everything typed so far, since nothing here is
+            // saved until "Create Plan" — worth a confirm once there's
+            // actually something to lose.
+            const hasUnsavedProgress = planName.trim() !== '' || workouts.length > 0 ||
+                currentWorkout.name.trim() !== '' || currentWorkout.exercises.length > 0;
+
+            const handleClose = async () => {
+                if (hasUnsavedProgress) {
+                    const proceed = await confirmDialog.request({
+                        title: 'Discard this plan?',
+                        message: 'Nothing has been saved yet — closing now will lose everything you\'ve entered.',
+                        confirmLabel: 'Discard',
+                        danger: true
+                    });
+                    if (!proceed) return;
+                }
+                onClose();
+            };
 
             const handleCreatePlan = () => {
-                if (planName.trim() && workouts.length > 0) {
-                    const plan = store.createPlan(planName);
-                    workouts.forEach(workout => {
-                        const w = store.addWorkout(plan.id, workout.name);
-                        workout.exercises.forEach(exercise => {
-                            store.addExercise(plan.id, w.id, exercise);
-                        });
+                if (creating || !planName.trim() || workouts.length === 0) return;
+                setCreating(true);
+                const plan = store.createPlan(planName);
+                workouts.forEach(workout => {
+                    const w = store.addWorkout(plan.id, workout.name);
+                    workout.exercises.forEach(exercise => {
+                        store.addExercise(plan.id, w.id, exercise);
                     });
-                    downloadBackupFile();
-                    onClose();
-                }
+                });
+                onClose();
             };
 
             if (step === 'name') {
@@ -1987,7 +3375,7 @@
                         <div className="modal-content">
                             <div className="modal-header">
                                 <div className="modal-title">Create Plan</div>
-                                <button className="modal-close-btn" onClick={onClose}>✕</button>
+                                <button className="modal-close-btn" onClick={handleClose} aria-label="Close">✕</button>
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -2022,7 +3410,7 @@
                         <div className="modal-content">
                             <div className="modal-header">
                                 <div className="modal-title">{planName}</div>
-                                <button className="modal-close-btn" onClick={onClose}>✕</button>
+                                <button className="modal-close-btn" onClick={handleClose} aria-label="Close">✕</button>
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -2058,24 +3446,26 @@
                                             </div>
                                             {currentWorkout.exercises.map((ex, idx) => (
                                                 <div key={idx} className="card" style={{ marginBottom: '8px' }}>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <div>
-                                                            <div className="text-body">{ex.name}</div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div className="text-body" style={{ wordBreak: 'break-word' }}>{ex.name}</div>
                                                             <div className="text-caption">
                                                                 {ex.sets}x {ex.reps || ex.duration}
                                                                 {ex.type === 'weighted' && ` @ ${ex.weight}kg`}
                                                             </div>
                                                         </div>
                                                         <button
-                                                            className="btn btn-danger btn-sm"
+                                                            className="icon-btn danger"
                                                             onClick={() => {
                                                                 setCurrentWorkout({
                                                                     ...currentWorkout,
                                                                     exercises: currentWorkout.exercises.filter((_, i) => i !== idx)
                                                                 });
                                                             }}
+                                                            aria-label="Delete exercise"
+                                                            title="Delete"
                                                         >
-                                                            Remove
+                                                            <IconTrash />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -2116,18 +3506,20 @@
                                                 <div className="text-h4" style={{ marginBottom: '12px' }}>Added Workouts</div>
                                                 {workouts.map((w, idx) => (
                                                     <div key={idx} className="card" style={{ marginBottom: '8px' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                            <div>
-                                                                <div className="text-body">{w.name}</div>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                                <div className="text-body" style={{ wordBreak: 'break-word' }}>{w.name}</div>
                                                                 <div className="text-caption">{w.exercises.length === 0 ? 'No exercises' : `${w.exercises.length} exercises`}</div>
                                                             </div>
                                                             <button
-                                                                className="btn btn-danger btn-sm"
+                                                                className="icon-btn danger"
                                                                 onClick={() => {
                                                                     setWorkouts(workouts.filter((_, i) => i !== idx));
                                                                 }}
+                                                                aria-label="Delete workout"
+                                                                title="Delete"
                                                             >
-                                                                Remove
+                                                                <IconTrash />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -2147,7 +3539,7 @@
                     <div className="modal-content">
                         <div className="modal-header">
                             <div className="modal-title">Review Plan</div>
-                            <button className="modal-close-btn" onClick={onClose}>✕</button>
+                            <button className="modal-close-btn" onClick={handleClose} aria-label="Close">✕</button>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -2167,8 +3559,8 @@
                                 <button className="btn btn-secondary btn-block" onClick={() => setStep('workouts')}>
                                     Back
                                 </button>
-                                <button className="btn btn-primary btn-block" onClick={handleCreatePlan}>
-                                    Create Plan
+                                <button className="btn btn-primary btn-block" onClick={handleCreatePlan} disabled={creating}>
+                                    {creating ? 'Creating…' : 'Create Plan'}
                                 </button>
                             </div>
                         </div>
@@ -2318,7 +3710,6 @@
             const handleRenamePlan = () => {
                 if (name.trim() && name.trim() !== plan.name) {
                     store.updatePlan(planId, { name: name.trim() });
-                    downloadBackupFile();
                 }
             };
 
@@ -2327,26 +3718,34 @@
                     store.addWorkout(planId, newWorkoutName.trim());
                     setNewWorkoutName('');
                     setAddingWorkout(false);
-                    downloadBackupFile();
                 }
             };
 
             const handleDuplicateWorkout = (workoutId) => {
                 store.duplicateWorkout(planId, workoutId);
-                downloadBackupFile();
             };
 
-            const handleDeleteWorkout = (workoutId, workoutName) => {
-                if (window.confirm(`Delete "${workoutName}"? This cannot be undone.`)) {
+            const handleDeleteWorkout = async (workoutId, workoutName) => {
+                const proceed = await confirmDialog.request({
+                    title: 'Delete this workout?',
+                    message: `"${workoutName}" and all its exercises will be removed. This cannot be undone.`,
+                    confirmLabel: 'Delete',
+                    danger: true
+                });
+                if (proceed) {
                     store.deleteWorkout(planId, workoutId);
-                    downloadBackupFile();
                 }
             };
 
-            const handleDeletePlan = () => {
-                if (window.confirm(`Delete the entire "${plan.name}" plan? This cannot be undone.`)) {
+            const handleDeletePlan = async () => {
+                const proceed = await confirmDialog.request({
+                    title: 'Delete this plan?',
+                    message: `The entire "${plan.name}" plan and all its workouts will be removed. This cannot be undone.`,
+                    confirmLabel: 'Delete',
+                    danger: true
+                });
+                if (proceed) {
                     store.deletePlan(planId);
-                    downloadBackupFile();
                     onNavigate('home');
                 }
             };
@@ -2357,17 +3756,11 @@
                 const workouts = [...plan.workouts];
                 [workouts[index], workouts[newIndex]] = [workouts[newIndex], workouts[index]];
                 store.reorderWorkouts(planId, workouts);
-                downloadBackupFile();
             };
 
             return (
                 <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
-                    <button
-                        onClick={() => onNavigate('plan-details', { planId })}
-                        style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '16px', marginBottom: '12px', cursor: 'pointer' }}
-                    >
-                        ← Back
-                    </button>
+                    <BackButton onClick={() => onNavigate('plan-details', { planId })} />
 
                     <div className="text-h2" style={{ marginBottom: '16px' }}>Edit Plan</div>
 
@@ -2390,51 +3783,65 @@
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
                         {plan.workouts.map((workout, idx) => (
                             <div key={workout.id} className="card">
-                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
-                                    <div>
-                                        <div className="text-body" style={{ fontWeight: 600 }}>{workout.name}</div>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px', gap: '8px' }}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div className="text-body" style={{ fontWeight: 600, wordBreak: 'break-word' }}>{workout.name}</div>
                                         <div className="text-caption">
                                             {workout.exercises.length === 0 ? 'No exercises' : `${workout.exercises.length} exercises`}
                                         </div>
+                                        {formatScheduledDays(workout.scheduledDays) && (
+                                            <div className="day-badge" style={{ marginTop: '2px' }}>
+                                                📅 {formatScheduledDays(workout.scheduledDays)}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                    <div className="icon-toolbar">
                                         <button
-                                            className="btn btn-secondary btn-sm"
+                                            className="icon-btn"
                                             onClick={() => handleMoveWorkout(idx, -1)}
                                             disabled={idx === 0}
-                                            style={{ opacity: idx === 0 ? 0.4 : 1, padding: '8px 10px' }}
+                                            style={{ opacity: idx === 0 ? 0.35 : 1 }}
+                                            aria-label="Move up"
+                                            title="Move up"
                                         >
-                                            ↑
+                                            <IconChevronUp />
                                         </button>
                                         <button
-                                            className="btn btn-secondary btn-sm"
+                                            className="icon-btn"
                                             onClick={() => handleMoveWorkout(idx, 1)}
                                             disabled={idx === plan.workouts.length - 1}
-                                            style={{ opacity: idx === plan.workouts.length - 1 ? 0.4 : 1, padding: '8px 10px' }}
+                                            style={{ opacity: idx === plan.workouts.length - 1 ? 0.35 : 1 }}
+                                            aria-label="Move down"
+                                            title="Move down"
                                         >
-                                            ↓
+                                            <IconChevronDown />
+                                        </button>
+                                        <div className="icon-toolbar-divider"></div>
+                                        <button
+                                            className="icon-btn"
+                                            onClick={() => onNavigate('edit-workout', { planId, workoutId: workout.id })}
+                                            aria-label="Edit exercises"
+                                            title="Edit exercises"
+                                        >
+                                            <IconPencil />
+                                        </button>
+                                        <button
+                                            className="icon-btn"
+                                            onClick={() => handleDuplicateWorkout(workout.id)}
+                                            aria-label="Duplicate workout"
+                                            title="Duplicate"
+                                        >
+                                            <IconCopy />
+                                        </button>
+                                        <button
+                                            className="icon-btn danger"
+                                            onClick={() => handleDeleteWorkout(workout.id, workout.name)}
+                                            aria-label="Delete workout"
+                                            title="Delete"
+                                        >
+                                            <IconTrash />
                                         </button>
                                     </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                    <button
-                                        className="btn btn-secondary btn-sm"
-                                        onClick={() => onNavigate('edit-workout', { planId, workoutId: workout.id })}
-                                    >
-                                        Edit Exercises
-                                    </button>
-                                    <button
-                                        className="btn btn-secondary btn-sm"
-                                        onClick={() => handleDuplicateWorkout(workout.id)}
-                                    >
-                                        ⧉ Duplicate
-                                    </button>
-                                    <button
-                                        className="btn btn-danger btn-sm"
-                                        onClick={() => handleDeleteWorkout(workout.id, workout.name)}
-                                    >
-                                        Delete
-                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -2468,7 +3875,7 @@
                     )}
 
                     <button className="btn btn-danger btn-block mt-lg" onClick={handleDeletePlan}>
-                        Delete Plan
+                        <IconTrash size={15} /> Delete Plan
                     </button>
                 </div>
             );
@@ -2488,26 +3895,28 @@
             const handleRenameWorkout = () => {
                 if (name.trim() && name.trim() !== workout.name) {
                     store.updateWorkout(planId, workoutId, { name: name.trim() });
-                    downloadBackupFile();
                 }
             };
 
             const handleAddExercise = (exercise) => {
                 store.addExercise(planId, workoutId, exercise);
                 setAddingExercise(false);
-                downloadBackupFile();
             };
 
             const handleSaveExercise = (exerciseId, updates) => {
                 store.updateExercise(planId, workoutId, exerciseId, updates);
                 setEditingExerciseId(null);
-                downloadBackupFile();
             };
 
-            const handleDeleteExercise = (exerciseId, exerciseName) => {
-                if (window.confirm(`Remove "${exerciseName}" from this workout?`)) {
+            const handleDeleteExercise = async (exerciseId, exerciseName) => {
+                const proceed = await confirmDialog.request({
+                    title: 'Delete this exercise?',
+                    message: `"${exerciseName}" will be removed from this workout. This cannot be undone.`,
+                    confirmLabel: 'Delete',
+                    danger: true
+                });
+                if (proceed) {
                     store.deleteExercise(planId, workoutId, exerciseId);
-                    downloadBackupFile();
                 }
             };
 
@@ -2517,29 +3926,29 @@
                 const exercises = [...workout.exercises];
                 [exercises[index], exercises[newIndex]] = [exercises[newIndex], exercises[index]];
                 store.reorderExercises(planId, workoutId, exercises);
-                downloadBackupFile();
             };
 
             const handleLinkSuperset = (exerciseId) => {
                 store.linkSupersetWithNext(planId, workoutId, exerciseId);
-                downloadBackupFile();
             };
 
             const handleUnlinkSuperset = (exerciseId) => {
                 store.unlinkSuperset(planId, workoutId, exerciseId);
-                downloadBackupFile();
+            };
+
+            const handleToggleDay = (day) => {
+                const current = workout.scheduledDays || [];
+                const next = current.includes(day)
+                    ? current.filter(d => d !== day)
+                    : [...current, day].sort();
+                store.updateWorkout(planId, workoutId, { scheduledDays: next });
             };
 
             const editingExercise = editingExerciseId ? workout.exercises.find(e => e.id === editingExerciseId) : null;
 
             return (
                 <div className="screen active" style={{ padding: '16px', paddingBottom: '100px' }}>
-                    <button
-                        onClick={() => onNavigate('edit-plan', { planId })}
-                        style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '16px', marginBottom: '12px', cursor: 'pointer' }}
-                    >
-                        ← Back
-                    </button>
+                    <BackButton onClick={() => onNavigate('edit-plan', { planId })} />
 
                     <div className="text-h2" style={{ marginBottom: '16px' }}>Edit Workout</div>
 
@@ -2551,6 +3960,16 @@
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             onBlur={handleRenameWorkout}
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label className="text-caption" style={{ display: 'block', marginBottom: '8px' }}>
+                            Scheduled Days (optional)
+                        </label>
+                        <DayOfWeekPicker
+                            selectedDays={workout.scheduledDays || []}
+                            onToggle={handleToggleDay}
                         />
                     </div>
 
@@ -2594,9 +4013,9 @@
                                                     🔗 SUPERSET — with {partner?.name}
                                                 </div>
                                             )}
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                                                <div>
-                                                    <div className="text-body" style={{ fontWeight: 600 }}>{ex.name}</div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '8px' }}>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div className="text-body" style={{ fontWeight: 600, wordBreak: 'break-word' }}>{ex.name}</div>
                                                     <div className="text-caption">
                                                         {ex.sets} sets
                                                         {ex.type === 'weighted' && ` × ${ex.reps} reps @ ${ex.weight}kg`}
@@ -2604,38 +4023,45 @@
                                                         {ex.type === 'time_based' && ` × ${ex.duration}s`}
                                                     </div>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '4px' }}>
+                                                <div className="icon-toolbar">
                                                     <button
-                                                        className="btn btn-secondary btn-sm"
+                                                        className="icon-btn"
                                                         onClick={() => handleMoveExercise(idx, -1)}
                                                         disabled={idx === 0}
-                                                        style={{ opacity: idx === 0 ? 0.4 : 1, padding: '8px 10px' }}
+                                                        style={{ opacity: idx === 0 ? 0.35 : 1 }}
+                                                        aria-label="Move up"
+                                                        title="Move up"
                                                     >
-                                                        ↑
+                                                        <IconChevronUp />
                                                     </button>
                                                     <button
-                                                        className="btn btn-secondary btn-sm"
+                                                        className="icon-btn"
                                                         onClick={() => handleMoveExercise(idx, 1)}
                                                         disabled={idx === workout.exercises.length - 1}
-                                                        style={{ opacity: idx === workout.exercises.length - 1 ? 0.4 : 1, padding: '8px 10px' }}
+                                                        style={{ opacity: idx === workout.exercises.length - 1 ? 0.35 : 1 }}
+                                                        aria-label="Move down"
+                                                        title="Move down"
                                                     >
-                                                        ↓
+                                                        <IconChevronDown />
+                                                    </button>
+                                                    <div className="icon-toolbar-divider"></div>
+                                                    <button
+                                                        className="icon-btn"
+                                                        onClick={() => setEditingExerciseId(ex.id)}
+                                                        aria-label="Edit exercise"
+                                                        title="Edit"
+                                                    >
+                                                        <IconPencil />
+                                                    </button>
+                                                    <button
+                                                        className="icon-btn danger"
+                                                        onClick={() => handleDeleteExercise(ex.id, ex.name)}
+                                                        aria-label="Delete exercise"
+                                                        title="Delete"
+                                                    >
+                                                        <IconTrash />
                                                     </button>
                                                 </div>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '8px', marginBottom: (linkedWithNext || canLinkWithNext) ? '8px' : '0' }}>
-                                                <button
-                                                    className="btn btn-secondary btn-sm btn-block"
-                                                    onClick={() => setEditingExerciseId(ex.id)}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    className="btn btn-danger btn-sm btn-block"
-                                                    onClick={() => handleDeleteExercise(ex.id, ex.name)}
-                                                >
-                                                    Remove
-                                                </button>
                                             </div>
                                             {linkedWithNext && (
                                                 <button
@@ -2685,7 +4111,7 @@
                 return 'Home';
             };
 
-            const currentSessionExists = state.currentSession?.inProgress;
+            const currentSessionExists = !!state.currentSession;
 
             return (
                 <div className="app-container">
@@ -2723,7 +4149,6 @@
                             <WorkoutSessionScreen
                                 onNavigate={handleNavigate}
                                 state={state}
-                                resuming={screenParams.resuming}
                             />
                         )}
 
@@ -2731,10 +4156,16 @@
                             <HistoryScreen onNavigate={handleNavigate} state={state} />
                         )}
 
+                        {currentScreen === 'progress' && (
+                            <ProgressScreen state={state} />
+                        )}
+
                         {currentScreen === 'session-detail' && (
                             <SessionDetailScreen
                                 onNavigate={handleNavigate}
                                 sessionId={screenParams.sessionId}
+                                returnTo={screenParams.returnTo}
+                                returnParams={screenParams.returnParams}
                                 state={state}
                             />
                         )}
@@ -2760,14 +4191,21 @@
                             className={`nav-item ${currentScreen === 'home' ? 'active' : ''}`}
                             onClick={() => handleNavigate('home')}
                         >
-                            <div className="nav-item-icon">🏠</div>
+                            <div className="nav-item-icon"><IconHome /></div>
                             <div>Home</div>
+                        </button>
+                        <button
+                            className={`nav-item ${currentScreen === 'progress' ? 'active' : ''}`}
+                            onClick={() => handleNavigate('progress')}
+                        >
+                            <div className="nav-item-icon"><IconChartLine /></div>
+                            <div>Progress</div>
                         </button>
                         <button
                             className={`nav-item ${currentScreen === 'history' ? 'active' : ''}`}
                             onClick={() => handleNavigate('history')}
                         >
-                            <div className="nav-item-icon">📊</div>
+                            <div className="nav-item-icon"><IconClipboardList /></div>
                             <div>History</div>
                         </button>
                         {currentSessionExists && (
@@ -2776,11 +4214,13 @@
                                 onClick={() => handleNavigate('workout')}
                                 style={{ color: 'var(--success)' }}
                             >
-                                <div className="nav-item-icon">⏱️</div>
+                                <div className="nav-item-icon"><IconTimer /></div>
                                 <div>Workout</div>
                             </button>
                         )}
                     </div>
+
+                    <GlobalConfirmModal />
                 </div>
             );
         }
